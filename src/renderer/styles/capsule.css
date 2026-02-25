@@ -71,6 +71,10 @@ body {
   transition: opacity 0.25s ease;
 }
 
+.waveform--dimmed {
+  opacity: 0.28;
+}
+
 .waveform-bar {
   width: 2.5px;
   border-radius: 2px;

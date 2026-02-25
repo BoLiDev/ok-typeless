@@ -22,7 +22,7 @@ export function Waveform({ vu, showLabel, dimmed = false }: Props): React.ReactE
 
   return (
     <>
-      <div className="waveform" style={dimmed ? { opacity: 0.28 } : undefined}>
+      <div className={dimmed ? "waveform waveform--dimmed" : "waveform"}>
         {BAR_PROFILE.map((max, i) => {
           const driven = MIN_HEIGHT + vu * (max - MIN_HEIGHT);
 
