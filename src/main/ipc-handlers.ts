@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from "electron";
-import { IPC_CHANNELS } from "@shared/types";
+import { AppState, IPC_CHANNELS } from "@shared/types";
 import { stateMachine } from "./state-machine";
 import { transcribe } from "./api";
 import { pasteText } from "./clipboard-output";
@@ -15,6 +15,8 @@ export function registerIpcHandlers(capsule: BrowserWindow): void {
 }
 
 function broadcastStateOnTransition(capsule: BrowserWindow): void {
+  let prevStatus: AppState["status"] = "idle";
+
   stateMachine.subscribe((state) => {
     capsule.webContents.send(IPC_CHANNELS.STATE_UPDATE, state);
 
@@ -22,9 +24,15 @@ function broadcastStateOnTransition(capsule: BrowserWindow): void {
       capsule.webContents.send(IPC_CHANNELS.START_RECORDING);
     }
 
-    if (state.status === "processing") {
+    const wasActive = prevStatus === "connecting" || prevStatus === "recording";
+    const isActive =
+      state.status === "connecting" || state.status === "recording";
+
+    if (wasActive && !isActive) {
       capsule.webContents.send(IPC_CHANNELS.STOP_RECORDING);
     }
+
+    prevStatus = state.status;
   });
 }
 

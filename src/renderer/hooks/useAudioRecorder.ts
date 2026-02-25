@@ -62,6 +62,11 @@ export function useAudioRecorder(): { vu: number } {
 
       clearTimeout(timeoutId);
 
+      if (stoppedRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+
       const recorder = new MediaRecorder(stream, {
         mimeType: "audio/webm;codecs=opus",
       });
@@ -79,9 +84,16 @@ export function useAudioRecorder(): { vu: number } {
       const ctx = new AudioContext({ sampleRate: VAD_SAMPLE_RATE });
       const source = ctx.createMediaStreamSource(stream);
       const processor = ctx.createScriptProcessor(VAD_FRAME_SIZE, 1, 1);
+      const silentSink = ctx.createGain();
       micSessionRef.current = new MicSession(recorder, stream, ctx, [
-        processor,
+        {
+          disconnect: () => {
+            processor.onaudioprocess = null;
+            processor.disconnect();
+          },
+        },
         source,
+        silentSink,
       ]);
 
       processor.onaudioprocess = (event) => {
@@ -95,7 +107,6 @@ export function useAudioRecorder(): { vu: number } {
         setVu(result.vu);
       };
 
-      const silentSink = ctx.createGain();
       silentSink.gain.value = 0;
       source.connect(processor);
       processor.connect(silentSink);
