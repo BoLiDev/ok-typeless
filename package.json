@@ -1,0 +1,28 @@
+{
+  "name": "ok-typeless",
+  "version": "1.0.0",
+  "description": "macOS voice input tool — Right Cmd to speak, text appears at cursor",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "start": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "electron": "^33.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "uiohook-napi": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "electron-vite": "^2.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
