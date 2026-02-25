@@ -122,9 +122,10 @@ function buildTrayMenu(tray: Tray, capsule: BrowserWindow): void {
 }
 
 function createTray(capsule: BrowserWindow): Tray {
-  const icon = nativeImage.createEmpty();
+  const iconPath = join(__dirname, "../../assets/tray-icon.png");
+  const icon = nativeImage.createFromPath(iconPath);
+  icon.setTemplateImage(true);
   const tray = new Tray(icon);
-  tray.setTitle("⊙");
   tray.setToolTip("ok-typeless");
   buildTrayMenu(tray, capsule);
   return tray;
