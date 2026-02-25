@@ -7,6 +7,7 @@ import type { RecordingMode } from "@shared/types";
 interface E2eAiConfig {
   mode: RecordingMode;
   skipPostProcessing: boolean;
+  groqPostModel?: "openai" | "llama";
 }
 
 const ROOT = resolve(__dirname, "..");
@@ -104,14 +105,19 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const fixtures = loadFixtures();
 
+  if (config.groqPostModel !== undefined) {
+    process.env["TYPELESS_GROQ_POST_MODEL"] = config.groqPostModel;
+  }
+
   if (fixtures.length === 0) {
     console.log("No fixtures found in test/e2e-ai/fixtures/");
     return;
   }
 
+  const postModel = config.groqPostModel ?? process.env["TYPELESS_GROQ_POST_MODEL"] ?? "openai";
   console.log();
   console.log(
-    `  ${ansi.bold("E2E AI Test")}  ${ansi.dim("·")}  mode: ${ansi.cyan(config.mode)}  ${ansi.dim("·")}  skipPostProcessing: ${ansi.cyan(String(config.skipPostProcessing))}`,
+    `  ${ansi.bold("E2E AI Test")}  ${ansi.dim("·")}  mode: ${ansi.cyan(config.mode)}  ${ansi.dim("·")}  model: ${ansi.cyan(postModel)}  ${ansi.dim("·")}  skipPostProcessing: ${ansi.cyan(String(config.skipPostProcessing))}`,
   );
   console.log(`  ${SEP}`);
 

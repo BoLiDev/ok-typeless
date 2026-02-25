@@ -10,6 +10,28 @@ import {
   TRANSLATE_PROMPT,
   TRANSLATE_ONLY_PROMPT,
 } from "./prompt";
+import { toSimplifiedChinese } from "../text/chinese-variant";
+
+const GROQ_POST_MODELS = {
+  openai: "openai/gpt-oss-120b",
+  llama: "llama-3.3-70b-versatile",
+} as const;
+
+type GroqPostModelName = keyof typeof GROQ_POST_MODELS;
+
+function resolveGroqPostModel(): string {
+  const selected = (process.env["TYPELESS_GROQ_POST_MODEL"] ??
+    "openai") as GroqPostModelName;
+
+  if (selected in GROQ_POST_MODELS) {
+    return GROQ_POST_MODELS[selected];
+  }
+
+  throw new Error(
+    `Unknown TYPELESS_GROQ_POST_MODEL: ${selected}. ` +
+      `Expected one of: ${Object.keys(GROQ_POST_MODELS).join(", ")}`,
+  );
+}
 
 export function resolveProvider(): ProviderConfig {
   const providerName = (process.env["TYPELESS_PROVIDER"] ??
@@ -31,7 +53,10 @@ export function resolveProvider(): ProviderConfig {
     );
   }
 
-  return { ...base, apiKey };
+  const llmModel =
+    providerName === "groq" ? resolveGroqPostModel() : base.llmModel;
+
+  return { ...base, apiKey, llmModel };
 }
 
 async function whisperTranscribe(
@@ -111,7 +136,12 @@ export async function transcribe(
 ): Promise<TranscribeResult> {
   const mockText = process.env["TYPELESS_MOCK_TRANSCRIPTION"];
   if (mockText !== undefined) {
-    return { sttRaw: mockText, sttMs: 0, llmOut: mockText, llmMs: 0 };
+    return {
+      sttRaw: mockText,
+      sttMs: 0,
+      llmOut: toSimplifiedChinese(mockText),
+      llmMs: 0,
+    };
   }
 
   const config = resolveProvider();
@@ -125,7 +155,7 @@ export async function transcribe(
   }
 
   if (skipPostProcessing && mode === "transcribe") {
-    return { sttRaw: raw, sttMs, llmOut: raw, llmMs: 0 };
+    return { sttRaw: raw, sttMs, llmOut: toSimplifiedChinese(raw), llmMs: 0 };
   }
 
   const llmStart = Date.now();
@@ -134,7 +164,8 @@ export async function transcribe(
     pickPrompt(mode, skipPostProcessing),
     config,
   );
+  const normalizedLlmOut = toSimplifiedChinese(llmOut);
   const llmMs = Date.now() - llmStart;
 
-  return { sttRaw: raw, sttMs, llmOut, llmMs };
+  return { sttRaw: raw, sttMs, llmOut: normalizedLlmOut, llmMs };
 }

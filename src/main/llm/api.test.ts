@@ -46,6 +46,68 @@ describe("resolveProvider", () => {
 
     process.env["TYPELESS_PROVIDER"] = saved;
   });
+
+  it("uses Groq OpenAI-family model by default", () => {
+    const savedProvider = process.env["TYPELESS_PROVIDER"];
+    const savedGroqKey = process.env["GROQ_API_KEY"];
+    const savedPostModel = process.env["TYPELESS_GROQ_POST_MODEL"];
+
+    process.env["TYPELESS_PROVIDER"] = "groq";
+    process.env["GROQ_API_KEY"] = savedGroqKey ?? "test-groq-key";
+    delete process.env["TYPELESS_GROQ_POST_MODEL"];
+
+    const provider = resolveProvider();
+    expect(provider.llmModel).toBe("openai/gpt-oss-120b");
+
+    process.env["TYPELESS_PROVIDER"] = savedProvider;
+    process.env["GROQ_API_KEY"] = savedGroqKey;
+    if (savedPostModel === undefined) {
+      delete process.env["TYPELESS_GROQ_POST_MODEL"];
+    } else {
+      process.env["TYPELESS_GROQ_POST_MODEL"] = savedPostModel;
+    }
+  });
+
+  it("uses llama model when TYPELESS_GROQ_POST_MODEL=llama", () => {
+    const savedProvider = process.env["TYPELESS_PROVIDER"];
+    const savedGroqKey = process.env["GROQ_API_KEY"];
+    const savedPostModel = process.env["TYPELESS_GROQ_POST_MODEL"];
+
+    process.env["TYPELESS_PROVIDER"] = "groq";
+    process.env["GROQ_API_KEY"] = savedGroqKey ?? "test-groq-key";
+    process.env["TYPELESS_GROQ_POST_MODEL"] = "llama";
+
+    const provider = resolveProvider();
+    expect(provider.llmModel).toBe("llama-3.3-70b-versatile");
+
+    process.env["TYPELESS_PROVIDER"] = savedProvider;
+    process.env["GROQ_API_KEY"] = savedGroqKey;
+    if (savedPostModel === undefined) {
+      delete process.env["TYPELESS_GROQ_POST_MODEL"];
+    } else {
+      process.env["TYPELESS_GROQ_POST_MODEL"] = savedPostModel;
+    }
+  });
+
+  it("throws when TYPELESS_GROQ_POST_MODEL is invalid", () => {
+    const savedProvider = process.env["TYPELESS_PROVIDER"];
+    const savedGroqKey = process.env["GROQ_API_KEY"];
+    const savedPostModel = process.env["TYPELESS_GROQ_POST_MODEL"];
+
+    process.env["TYPELESS_PROVIDER"] = "groq";
+    process.env["GROQ_API_KEY"] = savedGroqKey ?? "test-groq-key";
+    process.env["TYPELESS_GROQ_POST_MODEL"] = "invalid";
+
+    expect(() => resolveProvider()).toThrow(/Unknown TYPELESS_GROQ_POST_MODEL/);
+
+    process.env["TYPELESS_PROVIDER"] = savedProvider;
+    process.env["GROQ_API_KEY"] = savedGroqKey;
+    if (savedPostModel === undefined) {
+      delete process.env["TYPELESS_GROQ_POST_MODEL"];
+    } else {
+      process.env["TYPELESS_GROQ_POST_MODEL"] = savedPostModel;
+    }
+  });
 });
 
 describe("transcribe — mock mode", () => {

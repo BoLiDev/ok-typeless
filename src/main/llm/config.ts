@@ -4,7 +4,6 @@ export const PROVIDERS: Record<ProviderName, Omit<ProviderConfig, "apiKey">> = {
   groq: {
     baseUrl: "https://api.groq.com/openai/v1",
     sttModel: "whisper-large-v3-turbo",
-    // llmModel: "llama-3.3-70b-versatile",
     llmModel: "openai/gpt-oss-120b",
   },
   openai: {
