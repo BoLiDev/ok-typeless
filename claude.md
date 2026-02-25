@@ -9,6 +9,7 @@ macOS desktop voice input tool. Hold the Right Cmd key and speak — your words 
 - uiohook-napi (global Right Cmd hotkey)
 - Groq / OpenAI API (Whisper STT + LLM cleanup/translation)
 - Provider selected via the `TYPELESS_PROVIDER` environment variable (`groq` by default, optional `openai`)
+- dotenv — loads `.env` from project root at startup (copy `.env.example` → `.env` to set API keys)
 
 ## Architecture
 

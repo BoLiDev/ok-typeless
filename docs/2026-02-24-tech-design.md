@@ -229,6 +229,8 @@ Audio → Whisper STT (auto-detected language) → LLM cleanup + translate to En
 | `GROQ_API_KEY`      | If provider=groq   | —       | Groq API key                        |
 | `OPENAI_API_KEY`    | If provider=openai | —       | OpenAI API key                      |
 
+Variables are loaded from a `.env` file in the project root at startup (via `dotenv`). Copy `.env.example` to `.env` and fill in your API key — no manual shell export needed.
+
 At startup, check that the API key for the selected provider is set. If missing, show dialog and quit.
 
 ## Clipboard Output
@@ -390,4 +392,5 @@ Unit tests operate only on `reduceTap`. uiohook is trusted as a third-party libr
 | uiohook-napi | Global hotkey (Right Cmd detection) |
 | react        | Capsule UI                          |
 | react-dom    | Capsule UI                          |
+| dotenv       | Load `.env` file at startup         |
 | typescript   | Type safety                         |

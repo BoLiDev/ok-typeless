@@ -1,3 +1,7 @@
+import { config as loadDotenv } from "dotenv";
+import { join } from "path";
+loadDotenv({ path: join(process.cwd(), ".env") });
+
 import {
   app,
   BrowserWindow,
@@ -7,7 +11,6 @@ import {
   systemPreferences,
   screen,
 } from "electron";
-import { join } from "path";
 import { stateMachine } from "./state-machine";
 import type { StateMachineEvent } from "./state-machine";
 import { registerIpcHandlers } from "./ipc-handlers";

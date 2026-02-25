@@ -14,6 +14,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "dotenv": "^17.3.1",
     "electron": "^33.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
