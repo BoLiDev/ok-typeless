@@ -5,6 +5,18 @@ import { MicSession } from "../lib/mic-session";
 const MIC_TIMEOUT_MS = 5000;
 const VAD_SAMPLE_RATE = 16000;
 const VAD_FRAME_SIZE = 256; // ~16 ms at 16 kHz
+const LAUNCH_CUE_URL = new URL("../../../audio/launch.mp3", import.meta.url).toString();
+
+function playLaunchCue(): void {
+  try {
+    const audio = new Audio(LAUNCH_CUE_URL);
+    void audio.play().catch(() => {
+      // Silent fallback: recording should continue even if cue playback fails.
+    });
+  } catch {
+    // Silent fallback for environments where Audio is unavailable.
+  }
+}
 
 export function useAudioRecorder(): { vu: number } {
   const [vu, setVu] = useState(0);
@@ -88,6 +100,7 @@ export function useAudioRecorder(): { vu: number } {
 
       recorder.start();
       window.typeless.sendMicReady();
+      playLaunchCue();
     }
 
     window.typeless.onStartRecording(() => void startRecording());
