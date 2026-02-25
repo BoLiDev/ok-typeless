@@ -8,12 +8,14 @@ import {
   screen,
 } from "electron";
 import { join } from "path";
-import { uIOhook } from "uiohook-napi";
 import { stateMachine } from "./state-machine";
+import type { StateMachineEvent } from "./state-machine";
 import { registerIpcHandlers } from "./ipc-handlers";
 import { resolveProvider } from "./api";
 import { reduceTap, initialTapState, tapActionToEvent } from "./hotkey";
 import type { TapState } from "./hotkey";
+
+const TEST_MODE = process.env["TYPELESS_TEST_MODE"] === "1";
 
 app.dock?.hide();
 
@@ -106,6 +108,8 @@ function createTray(): Tray {
 }
 
 function startHotkey(capsule: BrowserWindow): void {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { uIOhook } = require("uiohook-napi") as typeof import("uiohook-napi");
   let tapState: TapState = initialTapState();
 
   uIOhook.on("keydown", (e) => {
@@ -166,16 +170,32 @@ function scheduleAutoReturnsToIdle(): void {
 }
 
 app.whenReady().then(() => {
-  checkAccessibility();
-  checkApiKey();
+  if (!TEST_MODE) {
+    checkAccessibility();
+    checkApiKey();
+  }
 
   const capsule = createCapsuleWindow();
-  createTray();
+
+  if (!TEST_MODE) {
+    createTray();
+  }
 
   registerIpcHandlers(capsule);
   watchStateForWindowVisibility(capsule);
   scheduleAutoReturnsToIdle();
-  startHotkey(capsule);
+
+  if (!TEST_MODE) {
+    startHotkey(capsule);
+  }
+
+  if (TEST_MODE) {
+    (global as Record<string, unknown>).testHelpers = {
+      sendEvent: (event: StateMachineEvent) => stateMachine.send(event),
+      getState: () => stateMachine.getState(),
+      isWindowVisible: () => capsule.isVisible(),
+    };
+  }
 });
 
 app.on("window-all-closed", () => {

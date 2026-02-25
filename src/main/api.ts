@@ -104,6 +104,10 @@ export async function transcribe(
   mode: RecordingMode,
   fileName = "audio.webm"
 ): Promise<string> {
+  const mockText = process.env["TYPELESS_MOCK_TRANSCRIPTION"];
+  if (mockText !== undefined) {
+    return mockText;
+  }
   const config = resolveProvider();
   const raw = await whisperTranscribe(audio, config, fileName);
   if (raw.trim() === "") return "";

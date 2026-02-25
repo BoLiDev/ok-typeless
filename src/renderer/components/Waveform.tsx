@@ -3,15 +3,15 @@ type Props = {
   showLabel: boolean;
 };
 
-const BAR_COUNT = 5;
-const BAR_HEIGHTS = [10, 16, 20, 16, 10]; // resting shape
+const BAR_PROFILE = [6, 10, 15, 20, 17, 12, 11, 16, 20, 16, 12, 7];
+const MIN_HEIGHT = 3;
 
 export function Waveform({ vu, showLabel }: Props): React.ReactElement {
   return (
     <>
       <div className="waveform">
-        {BAR_HEIGHTS.map((base, i) => {
-          const driven = base + vu * (20 - base);
+        {BAR_PROFILE.map((max, i) => {
+          const driven = MIN_HEIGHT + vu * (max - MIN_HEIGHT);
           return (
             <div
               key={i}

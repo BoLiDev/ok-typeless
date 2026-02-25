@@ -16,6 +16,11 @@ export default defineConfig({
     },
   },
   preload: {
+    resolve: {
+      alias: {
+        "@shared": resolve("src/shared"),
+      },
+    },
     build: {
       rollupOptions: {
         input: {

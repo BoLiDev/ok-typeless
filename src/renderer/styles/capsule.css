@@ -12,7 +12,8 @@ body {
 }
 
 .capsule {
-  width: 200px;
+  width: fit-content;
+  padding: 0 20px;
   height: 44px;
   background: #000;
   border-radius: 22px;
@@ -58,12 +59,12 @@ body {
 .waveform {
   display: flex;
   align-items: center;
-  gap: 3px;
-  height: 20px;
+  gap: 2px;
+  height: 22px;
 }
 
 .waveform-bar {
-  width: 3px;
+  width: 2.5px;
   border-radius: 2px;
   background: #fff;
   transform-origin: center;

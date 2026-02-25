@@ -2,7 +2,7 @@
   "name": "ok-typeless",
   "version": "1.0.0",
   "description": "macOS voice input tool — Right Cmd to speak, text appears at cursor",
-  "main": "dist/main/main.js",
+  "main": "out/main/main.js",
   "scripts": {
     "start": "electron-vite dev",
     "build": "electron-vite build",

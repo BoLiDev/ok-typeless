@@ -51,10 +51,12 @@ function handleAudioData(): void {
 
     transcribe(buffer, mode)
       .then((text) => {
-        stateMachine.send({ type: "API_SUCCESS", text });
-        if (text.trim() !== "") {
-          return pasteText(text);
+        if (text.trim() === "") {
+          stateMachine.send({ type: "API_FAILURE", message: "Nothing heard" });
+          return;
         }
+        stateMachine.send({ type: "API_SUCCESS", text });
+        return pasteText(text);
       })
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : "Unknown error";
