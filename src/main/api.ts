@@ -50,6 +50,7 @@ async function whisperTranscribe(
   const form = new FormData();
   form.append("file", new Blob([audio], { type: mimeType }), fileName);
   form.append("model", config.sttModel);
+  form.append("temperature", "0");
 
   const res = await fetch(`${config.baseUrl}/audio/transcriptions`, {
     method: "POST",

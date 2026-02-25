@@ -59,6 +59,7 @@ function handleAudioData(): void {
         return pasteText(text);
       })
       .catch((err: unknown) => {
+        console.error("[transcribe] API error:", err);
         const message = err instanceof Error ? err.message : "Unknown error";
         stateMachine.send({ type: "API_FAILURE", message });
       });
