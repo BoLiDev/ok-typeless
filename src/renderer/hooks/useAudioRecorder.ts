@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { VadLite } from "../lib/vad";
+import { MicSession } from "../lib/mic-session";
 
-const SILENCE_HOLD_MS = 1500;
 const MIC_TIMEOUT_MS = 5000;
 const VAD_SAMPLE_RATE = 16000;
 const VAD_FRAME_SIZE = 256; // ~16 ms at 16 kHz
@@ -9,12 +9,9 @@ const VAD_FRAME_SIZE = 256; // ~16 ms at 16 kHz
 export function useAudioRecorder(): { vu: number } {
   const [vu, setVu] = useState(0);
 
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
+  const micSessionRef = useRef<MicSession | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const vadRef = useRef(new VadLite());
-  const voiceSeenRef = useRef(false);
-  const silenceStartRef = useRef<number | null>(null);
   const stoppedRef = useRef(false);
 
   useEffect(() => {
@@ -22,17 +19,14 @@ export function useAudioRecorder(): { vu: number } {
       if (stoppedRef.current) return;
       stoppedRef.current = true;
 
-      const recorder = recorderRef.current;
-      if (recorder && recorder.state !== "inactive") {
-        recorder.stop();
-      }
+      micSessionRef.current?.stop();
+      micSessionRef.current = null;
     }
 
     async function startRecording(): Promise<void> {
       chunksRef.current = [];
       vadRef.current = new VadLite();
-      voiceSeenRef.current = false;
-      silenceStartRef.current = null;
+      micSessionRef.current = null;
       stoppedRef.current = false;
       setVu(0);
 
@@ -56,7 +50,6 @@ export function useAudioRecorder(): { vu: number } {
       const recorder = new MediaRecorder(stream, {
         mimeType: "audio/webm;codecs=opus",
       });
-      recorderRef.current = recorder;
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -65,16 +58,16 @@ export function useAudioRecorder(): { vu: number } {
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         blob.arrayBuffer().then((buf) => window.typeless.sendAudioData(buf));
-        stream.getTracks().forEach((t) => t.stop());
-        audioCtxRef.current?.close();
         setVu(0);
       };
 
       const ctx = new AudioContext({ sampleRate: VAD_SAMPLE_RATE });
-      audioCtxRef.current = ctx;
-
       const source = ctx.createMediaStreamSource(stream);
       const processor = ctx.createScriptProcessor(VAD_FRAME_SIZE, 1, 1);
+      micSessionRef.current = new MicSession(recorder, stream, ctx, [
+        processor,
+        source,
+      ]);
 
       processor.onaudioprocess = (event) => {
         const input = event.inputBuffer.getChannelData(0);
@@ -85,17 +78,6 @@ export function useAudioRecorder(): { vu: number } {
 
         const result = vadRef.current.pushFrame(int16);
         setVu(result.vu);
-
-        if (result.isSpeaking) {
-          voiceSeenRef.current = true;
-          silenceStartRef.current = null;
-        } else if (voiceSeenRef.current) {
-          if (silenceStartRef.current === null) {
-            silenceStartRef.current = Date.now();
-          } else if (Date.now() - silenceStartRef.current >= SILENCE_HOLD_MS) {
-            stopAndSend();
-          }
-        }
       };
 
       const silentSink = ctx.createGain();
