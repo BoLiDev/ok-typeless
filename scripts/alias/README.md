@@ -35,7 +35,7 @@ tp
 If script path changes, run install again:
 
 ```bash
-bash scripts/launcher/install-tp-command.sh
+bash scripts/alias/install-tp-command.sh
 source ~/.zshrc
 ```
 
