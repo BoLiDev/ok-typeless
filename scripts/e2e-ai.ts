@@ -49,7 +49,11 @@ async function main(): Promise<void> {
     console.log(`\n[${i + 1}/${fixtures.length}] ${fileName}`);
 
     try {
-      const buffer = readFileSync(filePath).buffer as ArrayBuffer;
+      const nodeBuffer = readFileSync(filePath);
+      const buffer = nodeBuffer.buffer.slice(
+        nodeBuffer.byteOffset,
+        nodeBuffer.byteOffset + nodeBuffer.byteLength,
+      ) as ArrayBuffer;
       const result = await transcribe(
         buffer,
         config.mode,
@@ -74,4 +78,7 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+main().catch((err: unknown) => {
+  console.error(err);
+  process.exit(1);
+});
