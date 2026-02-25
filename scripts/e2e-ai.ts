@@ -13,6 +13,11 @@ const ROOT = resolve(__dirname, "..");
 const FIXTURES_DIR = resolve(ROOT, "test/e2e-ai/fixtures");
 const CONFIG_PATH = resolve(ROOT, "test/e2e-ai/config.json");
 
+const TERM_WIDTH = process.stdout.columns ?? 100;
+const RIGHT_PAD = 4;
+const CONTENT_WIDTH = TERM_WIDTH - 5 - RIGHT_PAD; // "  │  " prefix + right padding
+const SEP_WIDTH = TERM_WIDTH - 2; // "  " indent is 2 chars
+
 const ansi = {
   bold: (s: string) => `\x1b[1m${s}\x1b[0m`,
   dim: (s: string) => `\x1b[2m${s}\x1b[0m`,
@@ -25,7 +30,52 @@ const ansi = {
 };
 
 const BORDER = ansi.dim("│");
-const SEP = ansi.dim("─".repeat(60));
+const SEP = ansi.dim("─".repeat(SEP_WIDTH));
+const BOTTOM = `  ${ansi.dim("└" + "─".repeat(SEP_WIDTH - 1))}`;
+
+function charDisplayWidth(codePoint: number): 1 | 2 {
+  if (
+    (codePoint >= 0x1100 && codePoint <= 0x115f) ||
+    (codePoint >= 0x2e80 && codePoint <= 0x9fff) ||
+    (codePoint >= 0xac00 && codePoint <= 0xd7af) ||
+    (codePoint >= 0xf900 && codePoint <= 0xfaff) ||
+    (codePoint >= 0xfe10 && codePoint <= 0xfe6f) ||
+    (codePoint >= 0xff00 && codePoint <= 0xff60) ||
+    (codePoint >= 0xffe0 && codePoint <= 0xffe6)
+  ) {
+    return 2;
+  }
+  return 1;
+}
+
+function wrapLine(line: string, maxWidth: number): string[] {
+  if (maxWidth <= 0) return [line];
+  const result: string[] = [];
+  let current = "";
+  let width = 0;
+
+  for (const char of line) {
+    const w = charDisplayWidth(char.codePointAt(0) ?? 0);
+    if (width + w > maxWidth) {
+      result.push(current);
+      current = char;
+      width = w;
+    } else {
+      current += char;
+      width += w;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function printLines(text: string): void {
+  for (const paragraph of text.split("\n")) {
+    for (const line of wrapLine(paragraph, CONTENT_WIDTH)) {
+      console.log(`  ${BORDER}  ${line}`);
+    }
+  }
+}
 
 function loadConfig(): E2eAiConfig {
   const raw = readFileSync(CONFIG_PATH, "utf-8");
@@ -39,10 +89,15 @@ function loadFixtures(): string[] {
     .sort();
 }
 
-function printLines(text: string): void {
-  for (const line of text.split("\n")) {
-    console.log(`  ${BORDER}  ${line}`);
-  }
+function fixtureHeader(index: number, total: number, fileName: string): string {
+  const indexStr = `[${index}/${total}]`;
+  // visible: "  " + "┌" + " " + indexStr + "  " + fileName + " " + dashes
+  const prefixLen = 2 + 1 + 1 + indexStr.length + 2 + fileName.length + 1;
+  const dashCount = Math.max(2, TERM_WIDTH - prefixLen);
+  return (
+    `  ${ansi.dim("┌")} ${ansi.boldCyan(indexStr)}  ${ansi.bold(fileName)} ` +
+    ansi.dim("─".repeat(dashCount))
+  );
 }
 
 async function main(): Promise<void> {
@@ -67,9 +122,7 @@ async function main(): Promise<void> {
     const filePath = resolve(FIXTURES_DIR, fileName);
 
     console.log();
-    console.log(
-      `  ${ansi.dim("┌")} ${ansi.boldCyan(`[${i + 1}/${fixtures.length}]`)}  ${ansi.bold(fileName)}`,
-    );
+    console.log(fixtureHeader(i + 1, fixtures.length, fileName));
     console.log(`  ${BORDER}`);
 
     try {
@@ -104,7 +157,7 @@ async function main(): Promise<void> {
     }
 
     console.log(`  ${BORDER}`);
-    console.log(`  ${ansi.dim("└" + "─".repeat(50))}`);
+    console.log(BOTTOM);
   }
 
   console.log();
@@ -115,7 +168,9 @@ async function main(): Promise<void> {
     );
     process.exit(1);
   } else {
-    console.log(`  ${ansi.boldGreen("✓")}  ${fixtures.length} fixtures completed`);
+    console.log(
+      `  ${ansi.boldGreen("✓")}  ${fixtures.length} fixtures completed`,
+    );
   }
   console.log();
 }
