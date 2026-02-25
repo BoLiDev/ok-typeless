@@ -4,27 +4,12 @@ import type {
   RecordingMode,
 } from "@shared/types";
 
-const PROVIDERS: Record<ProviderName, Omit<ProviderConfig, "apiKey">> = {
-  groq: {
-    baseUrl: "https://api.groq.com/openai/v1",
-    sttModel: "whisper-large-v3-turbo",
-    llmModel: "llama-3.3-70b-versatile",
-  },
-  openai: {
-    baseUrl: "https://api.openai.com/v1",
-    sttModel: "whisper-1",
-    llmModel: "gpt-4o-mini",
-  },
-};
-
-const CLEANUP_PROMPT =
-  "Clean up the following speech transcription. Remove filler words, fix obvious grammar mistakes, and remove hallucinated text from silence (repeated phrases, nonsense). Preserve the original language. Return only the cleaned text, nothing else.";
-
-const TRANSLATE_PROMPT =
-  "Clean up the following speech transcription (remove filler words, fix grammar, remove hallucinated nonsense from silence), then translate to natural English. Return only the English translation, nothing else.";
-
-const TRANSLATE_ONLY_PROMPT =
-  "Translate the following to natural English. Return only the translation, nothing else.";
+import { PROVIDERS } from "./config";
+import {
+  CLEANUP_PROMPT,
+  TRANSLATE_PROMPT,
+  TRANSLATE_ONLY_PROMPT,
+} from "./prompt";
 
 export function resolveProvider(): ProviderConfig {
   const providerName = (process.env["TYPELESS_PROVIDER"] ??
@@ -144,7 +129,11 @@ export async function transcribe(
   }
 
   const llmStart = Date.now();
-  const llmOut = await llmProcess(raw, pickPrompt(mode, skipPostProcessing), config);
+  const llmOut = await llmProcess(
+    raw,
+    pickPrompt(mode, skipPostProcessing),
+    config,
+  );
   const llmMs = Date.now() - llmStart;
 
   return { sttRaw: raw, sttMs, llmOut, llmMs };

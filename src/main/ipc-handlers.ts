@@ -1,7 +1,7 @@
 import { ipcMain, BrowserWindow } from "electron";
 import { AppState, IPC_CHANNELS } from "@shared/types";
 import { stateMachine } from "./state-machine";
-import { transcribe } from "./api";
+import { transcribe } from "./llm/api";
 import { pasteText } from "./clipboard-output";
 import { saveRecording, writeLogEntry } from "./session-logger";
 import { getSettings } from "./settings-store";

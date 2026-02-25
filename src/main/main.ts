@@ -15,7 +15,7 @@ import {
 import { stateMachine } from "./state-machine";
 import type { StateMachineEvent } from "./state-machine";
 import { registerIpcHandlers } from "./ipc-handlers";
-import { resolveProvider } from "./api";
+import { resolveProvider } from "./llm/api";
 import { reduceTap, initialTapState, tapActionToEvent } from "./hotkey";
 import type { TapState } from "./hotkey";
 import { getSettings, saveSettings } from "./settings-store";
