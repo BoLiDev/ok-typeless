@@ -1,42 +1,41 @@
 import { motion } from "framer-motion";
 
 type Props = {
-  vu: number;
   showLabel: boolean;
   dimmed?: boolean;
 };
 
-const BAR_PROFILE = [6, 10, 15, 20, 17, 12, 11, 16, 20, 16, 12, 7];
+const BAR_HEIGHTS = [5, 9, 14, 20, 22, 18, 13, 8];
 const MIN_HEIGHT = 3;
-const SILENCE_THRESHOLD = 0.04;
 
-const HEIGHT_SPRING = {
-  type: "spring",
-  stiffness: 320,
-  damping: 28,
-  mass: 0.6,
-} as const;
-
-export function Waveform({
-  vu,
-  showLabel,
-  dimmed = false,
-}: Props): React.ReactElement {
-  const isSilent = vu < SILENCE_THRESHOLD;
-
+export function Waveform({ showLabel, dimmed = false }: Props): React.ReactElement {
   return (
     <>
       <div className={`waveform${dimmed ? " waveform--dimmed" : ""}`}>
-        {BAR_PROFILE.map((max, i) => {
-          const driven = MIN_HEIGHT + vu * (max - MIN_HEIGHT);
+        {BAR_HEIGHTS.map((maxHeight, i) => {
+          const duration = 0.7 + i * 0.06;
+          const delay = Math.sin(i * 0.9) * 0.35;
 
           return (
             <motion.div
               key={i}
               className="waveform-bar"
               initial={{ height: MIN_HEIGHT }}
-              animate={{ height: isSilent ? MIN_HEIGHT : driven }}
-              transition={{ height: HEIGHT_SPRING }}
+              animate={
+                dimmed
+                  ? { height: MIN_HEIGHT }
+                  : { height: [MIN_HEIGHT, maxHeight, MIN_HEIGHT] }
+              }
+              transition={
+                dimmed
+                  ? {}
+                  : {
+                      duration,
+                      delay,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }
+              }
             />
           );
         })}

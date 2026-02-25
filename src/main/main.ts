@@ -10,6 +10,7 @@ import {
   dialog,
   systemPreferences,
   screen,
+  nativeImage,
 } from "electron";
 import { stateMachine } from "./state-machine";
 import type { StateMachineEvent } from "./state-machine";
@@ -17,6 +18,8 @@ import { registerIpcHandlers } from "./ipc-handlers";
 import { resolveProvider } from "./api";
 import { reduceTap, initialTapState, tapActionToEvent } from "./hotkey";
 import type { TapState } from "./hotkey";
+import { getSettings, saveSettings } from "./settings-store";
+import { IPC_CHANNELS } from "@shared/types";
 
 const TEST_MODE = process.env["TYPELESS_TEST_MODE"] === "1";
 
@@ -96,17 +99,34 @@ function createCapsuleWindow(): BrowserWindow {
   return capsule;
 }
 
-function createTray(): Tray {
-  const iconPath = join(__dirname, "../../assets/tray-icon.png");
-  const tray = new Tray(iconPath);
-  tray.setToolTip("ok-typeless");
+function buildTrayMenu(tray: Tray, capsule: BrowserWindow): void {
+  const { skipPostProcessing } = getSettings();
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: "About ok-typeless", role: "about" },
       { type: "separator" },
+      {
+        label: "Skip Post-Processing",
+        type: "checkbox",
+        checked: skipPostProcessing,
+        click: () => {
+          saveSettings({ skipPostProcessing: !skipPostProcessing });
+          buildTrayMenu(tray, capsule);
+          capsule.webContents.send(IPC_CHANNELS.SETTINGS_UPDATE, getSettings());
+        },
+      },
+      { type: "separator" },
       { label: "Quit", role: "quit" },
     ]),
   );
+}
+
+function createTray(capsule: BrowserWindow): Tray {
+  const icon = nativeImage.createEmpty();
+  const tray = new Tray(icon);
+  tray.setTitle("⊙");
+  tray.setToolTip("ok-typeless");
+  buildTrayMenu(tray, capsule);
   return tray;
 }
 
@@ -175,7 +195,7 @@ app.whenReady().then(() => {
   const capsule = createCapsuleWindow();
 
   if (!TEST_MODE) {
-    createTray();
+    createTray(capsule);
   }
 
   registerIpcHandlers(capsule);

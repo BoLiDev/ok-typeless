@@ -5,10 +5,15 @@ import { useAudioRecorder } from "./hooks/useAudioRecorder";
 
 export function App(): React.ReactElement | null {
   const [state, setState] = useState<AppState>({ status: "idle" });
-  const { vu } = useAudioRecorder();
+  const [skipPostProcessing, setSkipPostProcessing] = useState(false);
+
+  useAudioRecorder();
 
   useEffect(() => {
     window.typeless.onStateUpdate(setState);
+    window.typeless.onSettingsUpdate((settings) => {
+      setSkipPostProcessing(settings.skipPostProcessing);
+    });
   }, []);
 
   if (state.status === "idle") return null;
@@ -22,7 +27,7 @@ export function App(): React.ReactElement | null {
         height: "100vh",
       }}
     >
-      <Capsule state={state} vu={vu} />
+      <Capsule state={state} skipPostProcessing={skipPostProcessing} />
     </div>
   );
 }

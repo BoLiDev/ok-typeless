@@ -7,6 +7,10 @@ export type AppState =
   | { status: "processing"; mode: RecordingMode }
   | { status: "error"; message: string };
 
+export type Settings = {
+  skipPostProcessing: boolean;
+};
+
 export const IPC_CHANNELS = {
   /** Main → Renderer: push full AppState on every transition */
   STATE_UPDATE: "state-update",
@@ -20,6 +24,8 @@ export const IPC_CHANNELS = {
   MIC_READY: "mic-ready",
   /** Renderer → Main: mic failed or timed out */
   MIC_ERROR: "mic-error",
+  /** Main → Renderer: push current Settings on startup and on each change */
+  SETTINGS_UPDATE: "settings-update",
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
@@ -37,6 +43,7 @@ export type TypelessApi = {
   onStateUpdate: (callback: (state: AppState) => void) => void;
   onStartRecording: (callback: () => void) => void;
   onStopRecording: (callback: () => void) => void;
+  onSettingsUpdate: (callback: (settings: Settings) => void) => void;
   sendAudioData: (buffer: ArrayBuffer) => void;
   sendMicReady: () => void;
   sendMicError: (message: string) => void;

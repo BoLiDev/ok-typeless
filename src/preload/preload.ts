@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { IPC_CHANNELS } from "@shared/types";
-import type { AppState, TypelessApi } from "@shared/types";
+import type { AppState, Settings, TypelessApi } from "@shared/types";
 
 const api: TypelessApi = {
   onStateUpdate(callback: (state: AppState) => void): void {
@@ -15,6 +15,12 @@ const api: TypelessApi = {
 
   onStopRecording(callback: () => void): void {
     ipcRenderer.on(IPC_CHANNELS.STOP_RECORDING, () => callback());
+  },
+
+  onSettingsUpdate(callback: (settings: Settings) => void): void {
+    ipcRenderer.on(IPC_CHANNELS.SETTINGS_UPDATE, (_event, settings: Settings) =>
+      callback(settings),
+    );
   },
 
   sendAudioData(buffer: ArrayBuffer): void {

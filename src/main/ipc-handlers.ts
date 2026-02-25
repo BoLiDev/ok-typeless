@@ -4,9 +4,11 @@ import { stateMachine } from "./state-machine";
 import { transcribe } from "./api";
 import { pasteText } from "./clipboard-output";
 import { saveRecording, writeLogEntry } from "./session-logger";
+import { getSettings } from "./settings-store";
 
 export function registerIpcHandlers(capsule: BrowserWindow): void {
   broadcastStateOnTransition(capsule);
+  broadcastInitialSettings(capsule);
   handleMicReady();
   handleMicError();
   handleAudioData();
@@ -23,6 +25,12 @@ function broadcastStateOnTransition(capsule: BrowserWindow): void {
     if (state.status === "processing") {
       capsule.webContents.send(IPC_CHANNELS.STOP_RECORDING);
     }
+  });
+}
+
+function broadcastInitialSettings(capsule: BrowserWindow): void {
+  capsule.webContents.on("did-finish-load", () => {
+    capsule.webContents.send(IPC_CHANNELS.SETTINGS_UPDATE, getSettings());
   });
 }
 
@@ -50,8 +58,9 @@ function handleAudioData(): void {
 
     const mode = state.mode;
     const audioPath = saveRecording(buffer);
+    const { skipPostProcessing } = getSettings();
 
-    transcribe(buffer, mode)
+    transcribe(buffer, mode, "audio.webm", skipPostProcessing)
       .then((result) => {
         if (result.llmOut.trim() === "") {
           stateMachine.send({ type: "API_FAILURE", message: "Nothing heard" });

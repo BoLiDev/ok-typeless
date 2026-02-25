@@ -16,95 +16,100 @@ type Story = StoryObj<typeof Capsule>;
 export const ConnectingTranscribe: Story = {
   args: {
     state: { status: "connecting", mode: "transcribe" },
-    vu: 0,
+    skipPostProcessing: false,
   },
 };
 
 export const ConnectingTranslate: Story = {
   args: {
     state: { status: "connecting", mode: "translate" },
-    vu: 0,
+    skipPostProcessing: false,
   },
 };
 
 export const RecordingTranscribe: Story = {
   args: {
     state: { status: "recording", mode: "transcribe" },
-    vu: 0.6,
+    skipPostProcessing: false,
   },
 };
 
 export const RecordingTranslate: Story = {
   args: {
     state: { status: "recording", mode: "translate" },
-    vu: 0.6,
+    skipPostProcessing: false,
   },
 };
 
-export const RecordingLoud: Story = {
+export const RecordingSkipPostProcessing: Story = {
   args: {
     state: { status: "recording", mode: "transcribe" },
-    vu: 1.0,
+    skipPostProcessing: true,
   },
 };
 
 export const RecordingSilence: Story = {
   args: {
     state: { status: "recording", mode: "transcribe" },
-    vu: 0.0,
+    skipPostProcessing: false,
   },
 };
 
 export const ProcessingTranscribe: Story = {
   args: {
     state: { status: "processing", mode: "transcribe" },
-    vu: 0,
+    skipPostProcessing: false,
   },
 };
 
 export const ProcessingTranslate: Story = {
   args: {
     state: { status: "processing", mode: "translate" },
-    vu: 0,
+    skipPostProcessing: false,
+  },
+};
+
+export const ProcessingSkipPostProcessing: Story = {
+  args: {
+    state: { status: "processing", mode: "transcribe" },
+    skipPostProcessing: true,
   },
 };
 
 export const ErrorState: Story = {
   args: {
     state: { status: "error", message: "Microphone permission denied" },
-    vu: 0,
+    skipPostProcessing: false,
   },
 };
 
 export const ErrorNothingHeard: Story = {
   args: {
     state: { status: "error", message: "Nothing heard" },
-    vu: 0,
+    skipPostProcessing: false,
   },
 };
 
 export const ErrorNetworkFailure: Story = {
   args: {
     state: { status: "error", message: "Network error" },
-    vu: 0,
+    skipPostProcessing: false,
   },
 };
 
 type FlowStep = {
   state: Parameters<typeof Capsule>[0]["state"];
-  vu: number;
   ms: number;
 };
 
 const FULL_FLOW: FlowStep[] = [
-  { state: { status: "connecting", mode: "transcribe" }, vu: 0, ms: 900 },
-  { state: { status: "recording", mode: "transcribe" }, vu: 0.0, ms: 600 },
-  { state: { status: "recording", mode: "transcribe" }, vu: 0.5, ms: 500 },
-  { state: { status: "recording", mode: "transcribe" }, vu: 0.85, ms: 700 },
-  { state: { status: "recording", mode: "transcribe" }, vu: 0.3, ms: 500 },
-  { state: { status: "recording", mode: "transcribe" }, vu: 0.0, ms: 500 },
-  { state: { status: "processing", mode: "transcribe" }, vu: 0, ms: 1000 },
-  { state: { status: "error", message: "Nothing heard" }, vu: 0, ms: 1200 },
+  { state: { status: "connecting", mode: "transcribe" }, ms: 900 },
+  { state: { status: "recording", mode: "transcribe" }, ms: 600 },
+  { state: { status: "recording", mode: "transcribe" }, ms: 500 },
+  { state: { status: "recording", mode: "transcribe" }, ms: 700 },
+  { state: { status: "recording", mode: "transcribe" }, ms: 500 },
+  { state: { status: "processing", mode: "transcribe" }, ms: 1000 },
+  { state: { status: "error", message: "Nothing heard" }, ms: 1200 },
 ];
 
 function FullFlowPlayer() {
@@ -117,7 +122,7 @@ function FullFlowPlayer() {
     return () => clearTimeout(timer);
   }, [step, entry.ms]);
 
-  return <Capsule state={entry.state} vu={entry.vu} />;
+  return <Capsule state={entry.state} skipPostProcessing={false} />;
 }
 
 export const FullFlow: Story = {

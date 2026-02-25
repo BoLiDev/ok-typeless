@@ -23,6 +23,9 @@ const CLEANUP_PROMPT =
 const TRANSLATE_PROMPT =
   "Clean up the following speech transcription (remove filler words, fix grammar, remove hallucinated nonsense from silence), then translate to natural English. Return only the English translation, nothing else.";
 
+const TRANSLATE_ONLY_PROMPT =
+  "Translate the following to natural English. Return only the translation, nothing else.";
+
 export function resolveProvider(): ProviderConfig {
   const providerName = (process.env["TYPELESS_PROVIDER"] ??
     "groq") as ProviderName;
@@ -74,11 +77,9 @@ async function whisperTranscribe(
 
 async function llmProcess(
   text: string,
-  mode: RecordingMode,
+  systemPrompt: string,
   config: ProviderConfig,
 ): Promise<string> {
-  const systemPrompt = mode === "translate" ? TRANSLATE_PROMPT : CLEANUP_PROMPT;
-
   const res = await fetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
@@ -105,6 +106,11 @@ async function llmProcess(
   return json.choices[0]?.message.content ?? "";
 }
 
+function pickPrompt(mode: RecordingMode, skipPostProcessing: boolean): string {
+  if (skipPostProcessing && mode === "translate") return TRANSLATE_ONLY_PROMPT;
+  return mode === "translate" ? TRANSLATE_PROMPT : CLEANUP_PROMPT;
+}
+
 export type TranscribeResult = {
   sttRaw: string;
   sttMs: number;
@@ -116,6 +122,7 @@ export async function transcribe(
   audio: ArrayBuffer,
   mode: RecordingMode,
   fileName = "audio.webm",
+  skipPostProcessing = false,
 ): Promise<TranscribeResult> {
   const mockText = process.env["TYPELESS_MOCK_TRANSCRIPTION"];
   if (mockText !== undefined) {
@@ -132,8 +139,12 @@ export async function transcribe(
     return { sttRaw: "", sttMs, llmOut: "", llmMs: 0 };
   }
 
+  if (skipPostProcessing && mode === "transcribe") {
+    return { sttRaw: raw, sttMs, llmOut: raw, llmMs: 0 };
+  }
+
   const llmStart = Date.now();
-  const llmOut = await llmProcess(raw, mode, config);
+  const llmOut = await llmProcess(raw, pickPrompt(mode, skipPostProcessing), config);
   const llmMs = Date.now() - llmStart;
 
   return { sttRaw: raw, sttMs, llmOut, llmMs };
