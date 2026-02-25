@@ -1,0 +1,122 @@
+import { useEffect, useRef, useState } from "react";
+import { VadLite } from "../lib/vad";
+
+const SILENCE_HOLD_MS = 1500;
+const MIC_TIMEOUT_MS = 5000;
+const VAD_SAMPLE_RATE = 16000;
+const VAD_FRAME_SIZE = 256; // ~16 ms at 16 kHz
+
+export function useAudioRecorder(): { vu: number } {
+  const [vu, setVu] = useState(0);
+
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const vadRef = useRef(new VadLite());
+  const voiceSeenRef = useRef(false);
+  const silenceStartRef = useRef<number | null>(null);
+  const stoppedRef = useRef(false);
+
+  useEffect(() => {
+    function stopAndSend(): void {
+      if (stoppedRef.current) return;
+      stoppedRef.current = true;
+
+      const recorder = recorderRef.current;
+      if (recorder && recorder.state !== "inactive") {
+        recorder.stop();
+      }
+    }
+
+    async function startRecording(): Promise<void> {
+      chunksRef.current = [];
+      vadRef.current = new VadLite();
+      voiceSeenRef.current = false;
+      silenceStartRef.current = null;
+      stoppedRef.current = false;
+      setVu(0);
+
+      const timeoutId = setTimeout(() => {
+        window.typeless.sendMicError("Mic timeout");
+      }, MIC_TIMEOUT_MS);
+
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        clearTimeout(timeoutId);
+        const message =
+          err instanceof Error ? err.message : "Microphone permission denied";
+        window.typeless.sendMicError(message);
+        return;
+      }
+
+      clearTimeout(timeoutId);
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: "audio/webm;codecs=opus",
+      });
+      recorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        blob.arrayBuffer().then((buf) => window.typeless.sendAudioData(buf));
+        stream.getTracks().forEach((t) => t.stop());
+        audioCtxRef.current?.close();
+        setVu(0);
+      };
+
+      const ctx = new AudioContext({ sampleRate: VAD_SAMPLE_RATE });
+      audioCtxRef.current = ctx;
+
+      const source = ctx.createMediaStreamSource(stream);
+      const processor = ctx.createScriptProcessor(VAD_FRAME_SIZE, 1, 1);
+
+      processor.onaudioprocess = (event) => {
+        const input = event.inputBuffer.getChannelData(0);
+        const int16 = new Int16Array(input.length);
+        for (let i = 0; i < input.length; i++) {
+          int16[i] = Math.round(
+            Math.max(-1, Math.min(1, input[i])) * 32767
+          );
+        }
+
+        const result = vadRef.current.pushFrame(int16);
+        setVu(result.vu);
+
+        if (result.isSpeaking) {
+          voiceSeenRef.current = true;
+          silenceStartRef.current = null;
+        } else if (voiceSeenRef.current) {
+          if (silenceStartRef.current === null) {
+            silenceStartRef.current = Date.now();
+          } else if (Date.now() - silenceStartRef.current >= SILENCE_HOLD_MS) {
+            stopAndSend();
+          }
+        }
+      };
+
+      const silentSink = ctx.createGain();
+      silentSink.gain.value = 0;
+      source.connect(processor);
+      processor.connect(silentSink);
+      silentSink.connect(ctx.destination);
+
+      recorder.start();
+      window.typeless.sendMicReady();
+    }
+
+    window.typeless.onStartRecording(() => void startRecording());
+    window.typeless.onStopRecording(stopAndSend);
+
+    return () => {
+      stopAndSend();
+    };
+  }, []);
+
+  return { vu };
+}

@@ -20,6 +20,14 @@ const api: TypelessApi = {
   sendAudioData(buffer: ArrayBuffer): void {
     ipcRenderer.send(IPC_CHANNELS.AUDIO_DATA, buffer);
   },
+
+  sendMicReady(): void {
+    ipcRenderer.send(IPC_CHANNELS.MIC_READY);
+  },
+
+  sendMicError(message: string): void {
+    ipcRenderer.send(IPC_CHANNELS.MIC_ERROR, message);
+  },
 };
 
 contextBridge.exposeInMainWorld("typeless", api);

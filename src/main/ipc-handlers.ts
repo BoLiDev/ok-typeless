@@ -6,7 +6,9 @@ import { pasteText } from "./clipboard-output";
 
 export function registerIpcHandlers(capsule: BrowserWindow): void {
   broadcastStateOnTransition(capsule);
-  handleAudioData(capsule);
+  handleMicReady();
+  handleMicError();
+  handleAudioData();
 }
 
 function broadcastStateOnTransition(capsule: BrowserWindow): void {
@@ -23,8 +25,25 @@ function broadcastStateOnTransition(capsule: BrowserWindow): void {
   });
 }
 
-function handleAudioData(capsule: BrowserWindow): void {
+function handleMicReady(): void {
+  ipcMain.on(IPC_CHANNELS.MIC_READY, () => {
+    stateMachine.send({ type: "MIC_READY" });
+  });
+}
+
+function handleMicError(): void {
+  ipcMain.on(IPC_CHANNELS.MIC_ERROR, (_event, message: string) => {
+    stateMachine.send({ type: "MIC_FAILED", message });
+  });
+}
+
+function handleAudioData(): void {
   ipcMain.on(IPC_CHANNELS.AUDIO_DATA, (_event, buffer: ArrayBuffer) => {
+    // VAD auto-stop arrives while still in `recording` — transition first.
+    if (stateMachine.getState().status === "recording") {
+      stateMachine.send({ type: "STOP_RECORDING" });
+    }
+
     const state = stateMachine.getState();
     if (state.status !== "processing") return;
 
@@ -38,8 +57,7 @@ function handleAudioData(capsule: BrowserWindow): void {
         }
       })
       .catch((err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : "Unknown error";
+        const message = err instanceof Error ? err.message : "Unknown error";
         stateMachine.send({ type: "API_FAILURE", message });
       });
   });

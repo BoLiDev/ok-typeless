@@ -129,14 +129,43 @@ uIOhook.on("keyup", (e) => {
 ## Audio Pipeline
 
 ```
-[Mic] → getUserMedia() → MediaRecorder → ArrayBuffer ──IPC──→ [Main] → Groq API
-         (renderer)        (renderer)      (renderer)            (main)
+[Mic] → getUserMedia() → MediaRecorder ──────────────────── ArrayBuffer ──IPC──→ [Main] → Groq API
+         (renderer)                         (renderer)                              (main)
+                      ↘ AudioContext → ScriptProcessorNode → VadLite → auto-stop ──╯
+                                           (renderer)
 ```
 
-- **Format:** `audio/webm;codecs=opus` — native Chromium support, Groq accepts directly
-- **Renderer:** `useAudioRecorder` hook manages getUserMedia + MediaRecorder lifecycle
-- **Connecting state:** `getUserMedia()` is async. The `connecting` state covers the time between hotkey press and mic stream ready. 5s timeout.
-- **Transfer:** On stop, chunks assembled into ArrayBuffer, sent to main via IPC
+Two parallel paths on the same mic stream:
+
+1. **MediaRecorder** captures `audio/webm;codecs=opus` — assembled into an ArrayBuffer and sent to main via `audio-data` IPC when recording ends.
+2. **AudioContext + ScriptProcessorNode** converts the stream to 16-bit PCM frames at 16 kHz and feeds them into `VadLite` for voice activity detection.
+
+- **Connecting state:** `getUserMedia()` is async. The `connecting` state covers the time between hotkey press and mic stream ready. 5s timeout. On success the renderer sends `mic-ready` IPC; on failure it sends `mic-error`.
+- **Manual stop:** main sends `stop-recording` to renderer (triggered when hotkey is pressed again) → renderer stops MediaRecorder → sends `audio-data`.
+- **VAD auto-stop:** `VadLite` detects 1.5 s of silence after voice activity → renderer stops MediaRecorder → sends `audio-data`. Main's `audio-data` handler checks if state is `recording` and transitions to `processing` before proceeding.
+
+## Voice Activity Detection (VAD)
+
+Energy-based VAD ported from the `scribe` project (`VadLite`).
+
+**Algorithm:** RMS → dBFS → attack/release EMA smoothing → dynamic noise floor (self-calibrated over first 800 ms) → hysteresis state machine.
+
+**Configuration (ok-typeless tuning):**
+
+| Parameter        | Value | Meaning                                  |
+| ---------------- | ----- | ---------------------------------------- |
+| `hopSec`         | 0.016 | ~16 ms frames (256 samples @ 16 kHz)     |
+| `attackTau`      | 0.04  | 40 ms attack                             |
+| `releaseTau`     | 0.3   | 300 ms release                           |
+| `bootstrapSec`   | 0.8   | 800 ms noise-floor calibration           |
+| `enterDeltaDb`   | 12    | Noise floor + 12 dB to enter voice       |
+| `exitHysteresisDb` | 3   | Hysteresis — exit at enter − 3 dB        |
+| `holdFrames`     | 8     | 8 frames hold before state flip          |
+| `silenceHoldMs`  | 1500  | 1.5 s continuous silence → auto-stop     |
+
+**Outputs used:**
+- `vu` (0–1 normalised) → drives waveform bar animation in real time
+- `isSpeaking` state → auto-stop trigger
 
 ## API Integration
 
@@ -265,14 +294,16 @@ capsule.setIgnoreMouseEvents(true);
 
 ## IPC Design
 
-4 channels via `contextBridge`:
+6 channels via `contextBridge`:
 
-| Direction       | Channel           | Payload       | Purpose                  |
-| --------------- | ----------------- | ------------- | ------------------------ |
-| Main → Renderer | `state-update`    | `AppState`    | Push state changes to UI |
-| Main → Renderer | `start-recording` | —             | Begin audio capture      |
-| Main → Renderer | `stop-recording`  | —             | Stop and send audio      |
-| Renderer → Main | `audio-data`      | `ArrayBuffer` | Recorded audio buffer    |
+| Direction       | Channel           | Payload          | Purpose                                     |
+| --------------- | ----------------- | ---------------- | ------------------------------------------- |
+| Main → Renderer | `state-update`    | `AppState`       | Push state changes to UI                    |
+| Main → Renderer | `start-recording` | —                | Begin audio capture                         |
+| Main → Renderer | `stop-recording`  | —                | Manual stop — assemble and send audio       |
+| Renderer → Main | `audio-data`      | `ArrayBuffer`    | Recorded audio (manual or VAD auto-stop)    |
+| Renderer → Main | `mic-ready`       | —                | Mic stream acquired → MIC_READY event       |
+| Renderer → Main | `mic-error`       | `string`         | Mic failed/timed out → MIC_FAILED event     |
 
 ### preload.ts
 
@@ -282,6 +313,8 @@ contextBridge.exposeInMainWorld('typeless', {
   onStartRecording: (cb: () => void) => void,
   onStopRecording: (cb: () => void) => void,
   sendAudioData: (buffer: ArrayBuffer) => void,
+  sendMicReady: () => void,
+  sendMicError: (message: string) => void,
 });
 ```
 

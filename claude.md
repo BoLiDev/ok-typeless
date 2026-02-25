@@ -22,7 +22,10 @@ Main-heavy: Core logic is handled in the main process; the renderer is responsib
 
 ## Current Status
 
-Implementation plan completed (13 tasks). Ready to begin Task 1: Project Scaffold.
+Tasks 1–9 complete on branch `feature/implement` (worktree: `.worktrees/implement`).
+Tasks 10–13 in progress.
+
+VAD (voice activity detection) added to design — see tech design for details. Auto-submits after 1.5 s of silence. Two new IPC channels: `mic-ready`, `mic-error`.
 
 ## Conventions
 
