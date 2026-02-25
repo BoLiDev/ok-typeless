@@ -10,18 +10,18 @@ const hasOpenAiKey = !!process.env["OPENAI_API_KEY"];
 const hasAnyKey = hasGroqKey || hasOpenAiKey;
 
 describe.skipIf(!hasAnyKey)("api — real integration", () => {
-  it("transcribe(fixture, 'transcribe') returns a non-empty string", async () => {
+  it("transcribe(fixture, 'transcribe') returns a non-empty llmOut string", async () => {
     const buffer = readFileSync(FIXTURE).buffer as ArrayBuffer;
     const result = await transcribe(buffer, "transcribe", "test-audio.wav");
-    expect(typeof result).toBe("string");
-    expect(result.trim().length).toBeGreaterThan(0);
+    expect(typeof result.llmOut).toBe("string");
+    expect(result.llmOut.trim().length).toBeGreaterThan(0);
   }, 30_000);
 
-  it("transcribe(fixture, 'translate') returns a non-empty English string", async () => {
+  it("transcribe(fixture, 'translate') returns a non-empty English llmOut string", async () => {
     const buffer = readFileSync(FIXTURE).buffer as ArrayBuffer;
     const result = await transcribe(buffer, "translate", "test-audio.wav");
-    expect(typeof result).toBe("string");
-    expect(result.trim().length).toBeGreaterThan(0);
+    expect(typeof result.llmOut).toBe("string");
+    expect(result.llmOut.trim().length).toBeGreaterThan(0);
   }, 30_000);
 });
 
@@ -45,5 +45,25 @@ describe("resolveProvider", () => {
     expect(() => resolveProvider()).toThrow(/Unknown provider/);
 
     process.env["TYPELESS_PROVIDER"] = saved;
+  });
+});
+
+describe("transcribe — mock mode", () => {
+  it("returns TranscribeResult with zero timings when TYPELESS_MOCK_TRANSCRIPTION is set", async () => {
+    const saved = process.env["TYPELESS_MOCK_TRANSCRIPTION"];
+    process.env["TYPELESS_MOCK_TRANSCRIPTION"] = "hello world";
+
+    const result = await transcribe(new ArrayBuffer(0), "transcribe");
+
+    expect(result.sttRaw).toBe("hello world");
+    expect(result.llmOut).toBe("hello world");
+    expect(result.sttMs).toBe(0);
+    expect(result.llmMs).toBe(0);
+
+    if (saved === undefined) {
+      delete process.env["TYPELESS_MOCK_TRANSCRIPTION"];
+    } else {
+      process.env["TYPELESS_MOCK_TRANSCRIPTION"] = saved;
+    }
   });
 });

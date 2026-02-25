@@ -3,6 +3,7 @@ import { IPC_CHANNELS } from "@shared/types";
 import { stateMachine } from "./state-machine";
 import { transcribe } from "./api";
 import { pasteText } from "./clipboard-output";
+import { saveRecording, writeLogEntry } from "./session-logger";
 
 export function registerIpcHandlers(capsule: BrowserWindow): void {
   broadcastStateOnTransition(capsule);
@@ -48,15 +49,25 @@ function handleAudioData(): void {
     if (state.status !== "processing") return;
 
     const mode = state.mode;
+    const audioPath = saveRecording(buffer);
 
     transcribe(buffer, mode)
-      .then((text) => {
-        if (text.trim() === "") {
+      .then((result) => {
+        if (result.llmOut.trim() === "") {
           stateMachine.send({ type: "API_FAILURE", message: "Nothing heard" });
           return;
         }
-        stateMachine.send({ type: "API_SUCCESS", text });
-        return pasteText(text);
+        stateMachine.send({ type: "API_SUCCESS", text: result.llmOut });
+        writeLogEntry({
+          mode,
+          audioPath,
+          sttRaw: result.sttRaw,
+          sttMs: result.sttMs,
+          llmOut: result.llmOut,
+          llmMs: result.llmMs,
+          pastedText: result.llmOut,
+        });
+        return pasteText(result.llmOut);
       })
       .catch((err: unknown) => {
         console.error("[transcribe] API error:", err);

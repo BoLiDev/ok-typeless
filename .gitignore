@@ -3,6 +3,8 @@
 node_modules/
 dist/
 out/
+logs/
+logs/recordings/
 
 *storybook.log
 storybook-static

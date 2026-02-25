@@ -105,17 +105,36 @@ async function llmProcess(
   return json.choices[0]?.message.content ?? "";
 }
 
+export type TranscribeResult = {
+  sttRaw: string;
+  sttMs: number;
+  llmOut: string;
+  llmMs: number;
+};
+
 export async function transcribe(
   audio: ArrayBuffer,
   mode: RecordingMode,
   fileName = "audio.webm",
-): Promise<string> {
+): Promise<TranscribeResult> {
   const mockText = process.env["TYPELESS_MOCK_TRANSCRIPTION"];
   if (mockText !== undefined) {
-    return mockText;
+    return { sttRaw: mockText, sttMs: 0, llmOut: mockText, llmMs: 0 };
   }
+
   const config = resolveProvider();
+
+  const sttStart = Date.now();
   const raw = await whisperTranscribe(audio, config, fileName);
-  if (raw.trim() === "") return "";
-  return llmProcess(raw, mode, config);
+  const sttMs = Date.now() - sttStart;
+
+  if (raw.trim() === "") {
+    return { sttRaw: "", sttMs, llmOut: "", llmMs: 0 };
+  }
+
+  const llmStart = Date.now();
+  const llmOut = await llmProcess(raw, mode, config);
+  const llmMs = Date.now() - llmStart;
+
+  return { sttRaw: raw, sttMs, llmOut, llmMs };
 }
