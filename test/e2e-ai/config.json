@@ -1,5 +1,5 @@
 {
   "mode": "transcribe",
   "skipPostProcessing": false,
-  "groqPostModel": "openai"
+  "groqPostModel": "all"
 }

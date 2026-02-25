@@ -12,12 +12,12 @@ import {
 } from "./prompt";
 import { toSimplifiedChinese } from "../text/chinese-variant";
 
-const GROQ_POST_MODELS = {
+export const GROQ_POST_MODELS = {
   openai: "openai/gpt-oss-120b",
   llama: "llama-3.3-70b-versatile",
 } as const;
 
-type GroqPostModelName = keyof typeof GROQ_POST_MODELS;
+export type GroqPostModelName = keyof typeof GROQ_POST_MODELS;
 
 function resolveGroqPostModel(): string {
   const selected = (process.env["TYPELESS_GROQ_POST_MODEL"] ??

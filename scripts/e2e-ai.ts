@@ -1,14 +1,19 @@
 import "dotenv/config";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve, extname } from "node:path";
-import { transcribe } from "../src/main/llm/api";
+import { transcribe, GROQ_POST_MODELS } from "../src/main/llm/api";
+import type { GroqPostModelName } from "../src/main/llm/api";
 import type { RecordingMode } from "@shared/types";
 
 interface E2eAiConfig {
   mode: RecordingMode;
   skipPostProcessing: boolean;
-  groqPostModel?: "openai" | "llama";
+  groqPostModel?: GroqPostModelName | "all";
 }
+
+type ModelResult =
+  | { status: "ok"; modelKey: GroqPostModelName; llmOut: string; llmMs: number }
+  | { status: "error"; modelKey: GroqPostModelName; error: string };
 
 const ROOT = resolve(__dirname, "..");
 const FIXTURES_DIR = resolve(ROOT, "test/e2e-ai/fixtures");
@@ -16,8 +21,8 @@ const CONFIG_PATH = resolve(ROOT, "test/e2e-ai/config.json");
 
 const TERM_WIDTH = process.stdout.columns ?? 100;
 const RIGHT_PAD = 4;
-const CONTENT_WIDTH = TERM_WIDTH - 5 - RIGHT_PAD; // "  │  " prefix + right padding
-const SEP_WIDTH = TERM_WIDTH - 2; // "  " indent is 2 chars
+const CONTENT_WIDTH = TERM_WIDTH - 5 - RIGHT_PAD;
+const SEP_WIDTH = TERM_WIDTH - 2;
 
 const ansi = {
   bold: (s: string) => `\x1b[1m${s}\x1b[0m`,
@@ -31,6 +36,7 @@ const ansi = {
 };
 
 const BORDER = ansi.dim("│");
+const INNER_SEP = `  ${ansi.dim("│")}  `;
 const SEP = ansi.dim("─".repeat(SEP_WIDTH));
 const BOTTOM = `  ${ansi.dim("└" + "─".repeat(SEP_WIDTH - 1))}`;
 
@@ -78,6 +84,36 @@ function printLines(text: string): void {
   }
 }
 
+function stripAnsi(s: string): string {
+  return s.replace(/\x1b\[[0-9;]*m/g, "");
+}
+
+function visibleWidth(s: string): number {
+  let w = 0;
+  for (const char of stripAnsi(s)) {
+    w += charDisplayWidth(char.codePointAt(0) ?? 0);
+  }
+  return w;
+}
+
+function padToWidth(s: string, width: number): string {
+  const padding = Math.max(0, width - visibleWidth(s));
+  return s + " ".repeat(padding);
+}
+
+function wrapText(text: string, maxWidth: number): string[] {
+  const result: string[] = [];
+  for (const paragraph of text.split("\n")) {
+    result.push(...wrapLine(paragraph, maxWidth));
+  }
+  return result;
+}
+
+function printColLine(cells: string[], colWidth: number): void {
+  const parts = cells.map((cell) => padToWidth(cell, colWidth));
+  console.log(`  ${BORDER}  ${parts.join(INNER_SEP)}`);
+}
+
 function loadConfig(): E2eAiConfig {
   const raw = readFileSync(CONFIG_PATH, "utf-8");
   return JSON.parse(raw) as E2eAiConfig;
@@ -92,7 +128,6 @@ function loadFixtures(): string[] {
 
 function fixtureHeader(index: number, total: number, fileName: string): string {
   const indexStr = `[${index}/${total}]`;
-  // visible: "  " + "┌" + " " + indexStr + "  " + fileName + " " + dashes
   const prefixLen = 2 + 1 + 1 + indexStr.length + 2 + fileName.length + 1;
   const dashCount = Math.max(2, TERM_WIDTH - prefixLen);
   return (
@@ -101,12 +136,86 @@ function fixtureHeader(index: number, total: number, fileName: string): string {
   );
 }
 
+async function runFixtureAllModels(
+  buffer: ArrayBuffer,
+  fileName: string,
+  config: E2eAiConfig,
+  modelKeys: GroqPostModelName[],
+): Promise<{ sttRaw: string; sttMs: number; models: ModelResult[]; anyFailed: boolean }> {
+  let sttRaw = "";
+  let sttMs = 0;
+  let sttCaptured = false;
+  const models: ModelResult[] = [];
+  let anyFailed = false;
+
+  for (const modelKey of modelKeys) {
+    process.env["TYPELESS_GROQ_POST_MODEL"] = modelKey;
+    try {
+      const result = await transcribe(
+        buffer,
+        config.mode,
+        fileName,
+        config.skipPostProcessing,
+      );
+      if (!sttCaptured) {
+        sttRaw = result.sttRaw;
+        sttMs = result.sttMs;
+        sttCaptured = true;
+      }
+      models.push({ status: "ok", modelKey, llmOut: result.llmOut, llmMs: result.llmMs });
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      models.push({ status: "error", modelKey, error });
+      anyFailed = true;
+    }
+  }
+
+  return { sttRaw, sttMs, models, anyFailed };
+}
+
+function printAllModelsResult(
+  sttRaw: string,
+  sttMs: number,
+  models: ModelResult[],
+): void {
+  console.log(`  ${BORDER}  ${ansi.boldYellow("STT")}  ${ansi.dim(`${sttMs}ms`)}`);
+  printLines(sttRaw);
+  console.log(`  ${BORDER}`);
+
+  const N = models.length;
+  const colWidth = Math.floor((CONTENT_WIDTH - 5 * (N - 1)) / N);
+
+  const headers = models.map((r) =>
+    r.status === "ok"
+      ? `${ansi.boldGreen("LLM")} [${ansi.cyan(r.modelKey)}]  ${ansi.dim(`${r.llmMs}ms`)}`
+      : `${ansi.boldRed("LLM")} [${ansi.cyan(r.modelKey)}]  ${ansi.red("ERROR")}`,
+  );
+  printColLine(headers, colWidth);
+
+  const wrappedCols = models.map((r) =>
+    r.status === "ok"
+      ? wrapText(r.llmOut, colWidth)
+      : [ansi.red(r.error)],
+  );
+  const maxLines = Math.max(...wrappedCols.map((c) => c.length));
+
+  for (let i = 0; i < maxLines; i++) {
+    const cells = wrappedCols.map((lines) => lines[i] ?? "");
+    printColLine(cells, colWidth);
+  }
+}
+
 async function main(): Promise<void> {
   const config = loadConfig();
   const fixtures = loadFixtures();
 
-  if (config.groqPostModel !== undefined) {
-    process.env["TYPELESS_GROQ_POST_MODEL"] = config.groqPostModel;
+  const isAllMode = config.groqPostModel === "all";
+  const modelKeys: GroqPostModelName[] = isAllMode
+    ? (Object.keys(GROQ_POST_MODELS) as GroqPostModelName[])
+    : [((config.groqPostModel as GroqPostModelName | undefined) ?? "openai")];
+
+  if (!isAllMode && config.groqPostModel !== undefined) {
+    process.env["TYPELESS_GROQ_POST_MODEL"] = config.groqPostModel as string;
   }
 
   if (fixtures.length === 0) {
@@ -114,10 +223,13 @@ async function main(): Promise<void> {
     return;
   }
 
-  const postModel = config.groqPostModel ?? process.env["TYPELESS_GROQ_POST_MODEL"] ?? "openai";
+  const modelDisplay = isAllMode
+    ? `all (${modelKeys.join(", ")})`
+    : modelKeys[0];
+
   console.log();
   console.log(
-    `  ${ansi.bold("E2E AI Test")}  ${ansi.dim("·")}  mode: ${ansi.cyan(config.mode)}  ${ansi.dim("·")}  model: ${ansi.cyan(postModel)}  ${ansi.dim("·")}  skipPostProcessing: ${ansi.cyan(String(config.skipPostProcessing))}`,
+    `  ${ansi.bold("E2E AI Test")}  ${ansi.dim("·")}  mode: ${ansi.cyan(config.mode)}  ${ansi.dim("·")}  model: ${ansi.cyan(modelDisplay)}  ${ansi.dim("·")}  skipPostProcessing: ${ansi.cyan(String(config.skipPostProcessing))}`,
   );
   console.log(`  ${SEP}`);
 
@@ -131,35 +243,45 @@ async function main(): Promise<void> {
     console.log(fixtureHeader(i + 1, fixtures.length, fileName));
     console.log(`  ${BORDER}`);
 
-    try {
-      const nodeBuffer = readFileSync(filePath);
-      const buffer = nodeBuffer.buffer.slice(
-        nodeBuffer.byteOffset,
-        nodeBuffer.byteOffset + nodeBuffer.byteLength,
-      ) as ArrayBuffer;
+    const nodeBuffer = readFileSync(filePath);
+    const buffer = nodeBuffer.buffer.slice(
+      nodeBuffer.byteOffset,
+      nodeBuffer.byteOffset + nodeBuffer.byteLength,
+    ) as ArrayBuffer;
 
-      const result = await transcribe(
+    if (isAllMode) {
+      const { sttRaw, sttMs, models, anyFailed } = await runFixtureAllModels(
         buffer,
-        config.mode,
         fileName,
-        config.skipPostProcessing,
+        config,
+        modelKeys,
       );
-
-      console.log(
-        `  ${BORDER}  ${ansi.boldYellow("STT")}  ${ansi.dim(`${result.sttMs}ms`)}`,
-      );
-      printLines(result.sttRaw);
-      console.log(`  ${BORDER}`);
-      console.log(
-        `  ${BORDER}  ${ansi.boldGreen("LLM")}  ${ansi.dim(`${result.llmMs}ms`)}`,
-      );
-      printLines(result.llmOut);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.log(
-        `  ${BORDER}  ${ansi.boldRed("ERROR")}  ${ansi.red(message)}`,
-      );
-      failed++;
+      printAllModelsResult(sttRaw, sttMs, models);
+      if (anyFailed) failed++;
+    } else {
+      try {
+        const result = await transcribe(
+          buffer,
+          config.mode,
+          fileName,
+          config.skipPostProcessing,
+        );
+        console.log(
+          `  ${BORDER}  ${ansi.boldYellow("STT")}  ${ansi.dim(`${result.sttMs}ms`)}`,
+        );
+        printLines(result.sttRaw);
+        console.log(`  ${BORDER}`);
+        console.log(
+          `  ${BORDER}  ${ansi.boldGreen("LLM")}  ${ansi.dim(`${result.llmMs}ms`)}`,
+        );
+        printLines(result.llmOut);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.log(
+          `  ${BORDER}  ${ansi.boldRed("ERROR")}  ${ansi.red(message)}`,
+        );
+        failed++;
+      }
     }
 
     console.log(`  ${BORDER}`);
