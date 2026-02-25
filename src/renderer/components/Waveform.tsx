@@ -17,7 +17,11 @@ const HEIGHT_SPRING = {
   mass: 0.6,
 } as const;
 
-export function Waveform({ vu, showLabel, dimmed = false }: Props): React.ReactElement {
+export function Waveform({
+  vu,
+  showLabel,
+  dimmed = false,
+}: Props): React.ReactElement {
   const isSilent = vu < SILENCE_THRESHOLD;
 
   return (

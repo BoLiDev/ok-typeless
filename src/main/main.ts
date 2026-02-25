@@ -105,7 +105,7 @@ function createTray(): Tray {
       { label: "About ok-typeless", role: "about" },
       { type: "separator" },
       { label: "Quit", role: "quit" },
-    ])
+    ]),
   );
   return tray;
 }
@@ -116,10 +116,7 @@ function startHotkey(capsule: BrowserWindow): void {
   let tapState: TapState = initialTapState();
 
   uIOhook.on("keydown", (e) => {
-    const keycode =
-      e.keycode === 3676
-        ? "MetaRight"
-        : ("other" as const);
+    const keycode = e.keycode === 3676 ? "MetaRight" : ("other" as const);
     const result = reduceTap(tapState, {
       kind: "keydown",
       keycode,
@@ -129,10 +126,7 @@ function startHotkey(capsule: BrowserWindow): void {
   });
 
   uIOhook.on("keyup", (e) => {
-    const keycode =
-      e.keycode === 3676
-        ? "MetaRight"
-        : ("other" as const);
+    const keycode = e.keycode === 3676 ? "MetaRight" : ("other" as const);
 
     if (e.keycode === 1) {
       stateMachine.send({ type: "CANCEL" });

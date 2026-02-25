@@ -113,10 +113,7 @@ function FullFlowPlayer() {
   const entry = FULL_FLOW[step % FULL_FLOW.length];
 
   useEffect(() => {
-    const timer = setTimeout(
-      () => setStep((s) => s + 1),
-      entry.ms
-    );
+    const timer = setTimeout(() => setStep((s) => s + 1), entry.ms);
     return () => clearTimeout(timer);
   }, [step, entry.ms]);
 

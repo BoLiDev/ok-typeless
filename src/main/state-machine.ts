@@ -14,7 +14,7 @@ export type StateMachineEvent =
 
 function transition(
   state: AppState,
-  event: StateMachineEvent
+  event: StateMachineEvent,
 ): AppState | null {
   switch (state.status) {
     case "idle":

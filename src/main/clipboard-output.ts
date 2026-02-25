@@ -13,7 +13,8 @@ export async function pasteText(text: string): Promise<void> {
     return;
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { uIOhook, UiohookKey } = require("uiohook-napi") as typeof import("uiohook-napi");
+  const { uIOhook, UiohookKey } =
+    require("uiohook-napi") as typeof import("uiohook-napi");
   uIOhook.keyTap(UiohookKey.V, [UiohookKey.Meta]);
   await delay(100);
   clipboard.writeText(original);

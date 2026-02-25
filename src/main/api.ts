@@ -1,4 +1,8 @@
-import type { ProviderConfig, ProviderName, RecordingMode } from "@shared/types";
+import type {
+  ProviderConfig,
+  ProviderName,
+  RecordingMode,
+} from "@shared/types";
 
 const PROVIDERS: Record<ProviderName, Omit<ProviderConfig, "apiKey">> = {
   groq: {
@@ -20,7 +24,8 @@ const TRANSLATE_PROMPT =
   "Clean up the following speech transcription (remove filler words, fix grammar, remove hallucinated nonsense from silence), then translate to natural English. Return only the English translation, nothing else.";
 
 export function resolveProvider(): ProviderConfig {
-  const providerName = (process.env["TYPELESS_PROVIDER"] ?? "groq") as ProviderName;
+  const providerName = (process.env["TYPELESS_PROVIDER"] ??
+    "groq") as ProviderName;
   const base = PROVIDERS[providerName];
   if (!base) {
     throw new Error(`Unknown provider: ${providerName}`);
@@ -34,7 +39,7 @@ export function resolveProvider(): ProviderConfig {
   if (!apiKey) {
     throw new Error(
       `Missing API key for provider "${providerName}". ` +
-        `Set ${providerName === "groq" ? "GROQ_API_KEY" : "OPENAI_API_KEY"}.`
+        `Set ${providerName === "groq" ? "GROQ_API_KEY" : "OPENAI_API_KEY"}.`,
     );
   }
 
@@ -44,7 +49,7 @@ export function resolveProvider(): ProviderConfig {
 async function whisperTranscribe(
   audio: ArrayBuffer,
   config: ProviderConfig,
-  fileName = "audio.webm"
+  fileName = "audio.webm",
 ): Promise<string> {
   const mimeType = fileName.endsWith(".wav") ? "audio/wav" : "audio/webm";
   const form = new FormData();
@@ -70,7 +75,7 @@ async function whisperTranscribe(
 async function llmProcess(
   text: string,
   mode: RecordingMode,
-  config: ProviderConfig
+  config: ProviderConfig,
 ): Promise<string> {
   const systemPrompt = mode === "translate" ? TRANSLATE_PROMPT : CLEANUP_PROMPT;
 
@@ -103,7 +108,7 @@ async function llmProcess(
 export async function transcribe(
   audio: ArrayBuffer,
   mode: RecordingMode,
-  fileName = "audio.webm"
+  fileName = "audio.webm",
 ): Promise<string> {
   const mockText = process.env["TYPELESS_MOCK_TRANSCRIPTION"];
   if (mockText !== undefined) {
@@ -111,6 +116,7 @@ export async function transcribe(
   }
   const config = resolveProvider();
   const raw = await whisperTranscribe(audio, config, fileName);
-  if (raw.trim() === "") return "";
-  return llmProcess(raw, mode, config);
+  return raw;
+  // if (raw.trim() === "") return "";
+  // return llmProcess(raw, mode, config);
 }

@@ -36,7 +36,7 @@ function percentile(arr: number[], p: number): number {
   const a = arr.slice().sort((x, y) => x - y);
   const idx = Math.min(
     a.length - 1,
-    Math.max(0, Math.floor((p / 100) * (a.length - 1)))
+    Math.max(0, Math.floor((p / 100) * (a.length - 1))),
   );
   return a[idx];
 }
@@ -64,7 +64,7 @@ export class VadLite {
     this.releaseAlpha = 1 - Math.exp(-this.cfg.hopSec / this.cfg.releaseTau);
     this.bootstrapFramesNeeded = Math.max(
       1,
-      Math.round(this.cfg.bootstrapSec / this.cfg.hopSec)
+      Math.round(this.cfg.bootstrapSec / this.cfg.hopSec),
     );
   }
 
@@ -123,8 +123,8 @@ export class VadLite {
       0,
       Math.min(
         1,
-        (this.smoothedDb - this.cfg.dbFloor) / (0 - this.cfg.dbFloor)
-      )
+        (this.smoothedDb - this.cfg.dbFloor) / (0 - this.cfg.dbFloor),
+      ),
     );
 
     return {

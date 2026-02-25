@@ -5,7 +5,7 @@ import type { AppState, TypelessApi } from "@shared/types";
 const api: TypelessApi = {
   onStateUpdate(callback: (state: AppState) => void): void {
     ipcRenderer.on(IPC_CHANNELS.STATE_UPDATE, (_event, state: AppState) =>
-      callback(state)
+      callback(state),
     );
   },
 

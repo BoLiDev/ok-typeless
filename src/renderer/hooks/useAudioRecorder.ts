@@ -80,9 +80,7 @@ export function useAudioRecorder(): { vu: number } {
         const input = event.inputBuffer.getChannelData(0);
         const int16 = new Int16Array(input.length);
         for (let i = 0; i < input.length; i++) {
-          int16[i] = Math.round(
-            Math.max(-1, Math.min(1, input[i])) * 32767
-          );
+          int16[i] = Math.round(Math.max(-1, Math.min(1, input[i])) * 32767);
         }
 
         const result = vadRef.current.pushFrame(int16);
