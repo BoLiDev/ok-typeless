@@ -26,6 +26,16 @@ function loadFixtures(): string[] {
     .sort();
 }
 
+function printField(label: string, ms: number, text: string): void {
+  const prefix = `  ${label} (${ms}ms): `;
+  const indent = " ".repeat(prefix.length);
+  const lines = text.split("\n");
+  console.log(`${prefix}${lines[0]}`);
+  for (const line of lines.slice(1)) {
+    console.log(`${indent}${line}`);
+  }
+}
+
 async function main(): Promise<void> {
   const config = loadConfig();
   const fixtures = loadFixtures();
@@ -60,8 +70,8 @@ async function main(): Promise<void> {
         fileName,
         config.skipPostProcessing,
       );
-      console.log(`  STT (${result.sttMs}ms):  ${result.sttRaw}`);
-      console.log(`  LLM (${result.llmMs}ms): ${result.llmOut}`);
+      printField("STT", result.sttMs, result.sttRaw);
+      printField("LLM", result.llmMs, result.llmOut);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`  ERROR: ${message}`);
