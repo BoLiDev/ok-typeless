@@ -9,7 +9,9 @@
     "preview": "electron-vite preview",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "electron": "^33.0.0",
@@ -19,11 +21,16 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@storybook/addon-a11y": "^10.2.12",
+    "@storybook/addon-docs": "^10.2.12",
+    "@storybook/react-vite": "^10.2.12",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
     "electron-vite": "^2.3.0",
+    "playwright": "^1.58.2",
+    "storybook": "^10.2.12",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }
