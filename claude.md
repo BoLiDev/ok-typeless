@@ -19,14 +19,14 @@ Main-heavy: Core logic is handled in the main process; the renderer is responsib
 
 - PRD: `docs/2026-02-23-prd.md`
 - Tech Design: `docs/2026-02-24-tech-design.md`
-- Implementation Plan: `docs/plans/2026-02-25-mvp.md`
 
 ## Current Status
 
-Tasks 1–9 complete on branch `feature/implement` (worktree: `.worktrees/implement`).
-Tasks 10–13 in progress.
+All 13 MVP tasks complete. The app is fully functional on `master`.
 
-VAD (voice activity detection) added to design — see tech design for details. Auto-submits after 1.5 s of silence. Two new IPC channels: `mic-ready`, `mic-error`.
+Ralph autonomous loop is set up in `.ralph/`. To run new feature work:
+1. Populate `.ralph/prd.json` with user stories (use the ralph-skills PRD workflow).
+2. Run: `bash .ralph/ralph.sh --tool claude --max-iterations 20`
 
 ## Conventions
 
