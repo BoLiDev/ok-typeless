@@ -1,0 +1,8 @@
+[     418ms] [ERROR] SB_PREVIEW_API_0009 (NoStoryMatchError): Couldn't find story matching 'capsule--full-flow'.
+
+- Are you sure a story with that id exists?
+- Please check your stories field of your main.js config.
+- Also check the browser console and terminal for error messages.
+    at PreviewWeb.selectSpecifiedStory (http://localhost:6006/node_modules/.cache/storybook/10.2.12/1c3385a5d25e538d10b518b310c74d3ca2690b6aaffeadccd74da79736171f86/sb-vite/deps/storybook_internal_preview_runtime.js?v=cd39d583:36179:9)
+    at PreviewWeb.initializeWithStoryIndex (http://localhost:6006/node_modules/.cache/storybook/10.2.12/1c3385a5d25e538d10b518b310c74d3ca2690b6aaffeadccd74da79736171f86/sb-vite/deps/storybook_internal_preview_runtime.js?v=cd39d583:36159:67) @ http://localhost:6006/node_modules/.cache/storybook/10.2.12/1c3385a5d25e538d10b518b310c74d3ca2690b6aaffeadccd74da79736171f86/sb-vite/deps/storybook_internal_preview_runtime.js?v=cd39d583:13667
+[     419ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:6006/favicon.ico:0

@@ -13,5 +13,16 @@ export function App(): React.ReactElement | null {
 
   if (state.status === "idle") return null;
 
-  return <Capsule state={state} vu={vu} />;
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      <Capsule state={state} vu={vu} />
+    </div>
+  );
 }

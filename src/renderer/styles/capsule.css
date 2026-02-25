@@ -12,6 +12,7 @@ body {
 }
 
 .capsule {
+  position: relative;
   width: fit-content;
   padding: 0 20px;
   height: 44px;
@@ -20,19 +21,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  animation: capsule-in 150ms ease-out;
+  will-change: transform;
 }
 
-@keyframes capsule-in {
-  from {
-    opacity: 0;
-    transform: scale(0.85) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+.capsule-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .capsule-label {
@@ -41,6 +36,7 @@ body {
   font-weight: 500;
   letter-spacing: 0.01em;
   user-select: none;
+  white-space: nowrap;
 }
 
 .connecting-dot {
@@ -59,7 +55,7 @@ body {
 .waveform {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 2.5px;
   height: 22px;
 }
 
@@ -67,8 +63,7 @@ body {
   width: 2.5px;
   border-radius: 2px;
   background: #fff;
-  transform-origin: center;
-  transition: height 80ms ease-out;
+  min-height: 3px;
 }
 
 .tip-bubble {
@@ -84,10 +79,4 @@ body {
   border-radius: 10px;
   white-space: nowrap;
   pointer-events: none;
-  animation: tip-in 150ms ease-out;
-}
-
-@keyframes tip-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
