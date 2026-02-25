@@ -18,10 +18,11 @@ Main-heavy: Core logic is handled in the main process; the renderer is responsib
 
 - PRD: `docs/2026-02-23-prd.md`
 - Tech Design: `docs/2026-02-24-tech-design.md`
+- Implementation Plan: `docs/plans/2026-02-25-mvp.md`
 
 ## Current Status
 
-Tech design completed, pending implementation.
+Implementation plan completed (13 tasks). Ready to begin Task 1: Project Scaffold.
 
 ## Conventions
 
