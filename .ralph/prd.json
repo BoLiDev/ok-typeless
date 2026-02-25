@@ -1,17 +1,19 @@
 {
   "project": "ok-typeless",
-  "branchName": "ralph/local-session-logging",
-  "description": "Local session logging — save audio recordings to disk and append structured plain-text log entries capturing STT output, LLM output, and per-step timing for every completed voice session.",
+  "branchName": "ralph/ui-enhancements",
+  "description": "UI Enhancements — capsule border, fluid waveform animation, crisp tray icon, and Skip Post-Processing toggle",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Bootstrap logging infrastructure",
-      "description": "As a developer, I need a SessionLogger module and a logs/ directory structure in place so that other stories have somewhere to write data.",
+      "title": "Add settings persistence module",
+      "description": "As a developer, I need a simple persistent settings store so user preferences survive app restarts.",
       "acceptanceCriteria": [
-        "src/main/session-logger.ts exists and is the single entry point for all logging writes",
-        "On first write the module creates logs/ and logs/recordings/ using fs.mkdirSync with { recursive: true }",
-        "logs/ and logs/recordings/ are added to .gitignore",
-        "The log file path resolves to logs/typeless.log relative to the project root",
+        "New file src/main/settings-store.ts exports getSettings(): Settings and saveSettings(patch: Partial<Settings>): void",
+        "Settings type added to src/shared/types.ts: { skipPostProcessing: boolean }",
+        "Default value is { skipPostProcessing: false }",
+        "Settings are stored as JSON in app.getPath('userData')/settings.json",
+        "Uses Node fs directly — no new npm dependencies",
+        "Handles missing or malformed file gracefully by returning defaults",
         "Typecheck passes"
       ],
       "priority": 1,
@@ -20,13 +22,11 @@
     },
     {
       "id": "US-002",
-      "title": "Save audio file to disk on session start",
-      "description": "As a user, I want the raw audio of every completed recording saved to disk so I can re-listen to what I said.",
+      "title": "Add silver-gray border to capsule",
+      "description": "As a user, I want the capsule to have a subtle silver-gray border so its boundaries are clearly visible regardless of desktop background.",
       "acceptanceCriteria": [
-        "When AUDIO_DATA arrives in ipc-handlers.ts, the audio ArrayBuffer is written to logs/recordings/YYYYMMDD-HHmmss-SSS.webm before transcribe() is called",
-        "The generated file path is passed into the log entry so it appears in the final log",
-        "Each session gets a unique timestamp-based filename; no files are overwritten",
-        "If the audio write fails, the error is logged to console.error and transcription proceeds normally",
+        ".capsule in capsule.css gains a 1px solid border in a light silver-gray color (e.g. rgba(255,255,255,0.18))",
+        "No other capsule styling is changed",
         "Typecheck passes"
       ],
       "priority": 2,
@@ -35,34 +35,67 @@
     },
     {
       "id": "US-003",
-      "title": "Instrument STT and LLM steps with timing",
-      "description": "As a developer, I need api.ts to return per-step timing and raw outputs so they can be included in the log entry.",
+      "title": "Overhaul waveform with scribe-style animation",
+      "description": "As a user, I want the recording animation to look fluid and organic so the capsule feels alive during voice input.",
       "acceptanceCriteria": [
-        "transcribe() in api.ts returns { sttRaw: string, sttMs: number, llmOut: string, llmMs: number } instead of string",
-        "Timing is measured with Date.now() before and after each API call",
-        "ipc-handlers.ts is updated to use result.llmOut as the pasted text (no behaviour change)",
-        "When TYPELESS_MOCK_TRANSCRIPTION is set, all timing fields are 0 and sttRaw equals llmOut",
-        "All existing api.test.ts tests pass",
+        "Waveform.tsx uses infinite repeating keyframe animations per bar, not VU-driven heights",
+        "8 bars with a frequency-amplitude profile: center bars animate taller, outer bars shorter",
+        "Each bar has a unique animation duration and staggered delay derived from bar index",
+        "During recording state: bars animate continuously with no VU input required for movement",
+        "During connecting state: bars are static and dimmed (unchanged from current behavior)",
+        "No new npm dependencies — framer-motion is already installed",
         "Typecheck passes"
       ],
       "priority": 3,
       "passes": true,
-      "notes": ""
+      "notes": "Reference: /Users/libo/workspace/project/scribe/src/renderer/src/dictation/components/Scriber/components/ScriberBars.tsx — key technique is keyframes array with repeat: Infinity and per-bar delay from Math.sin(index * constant)"
     },
     {
       "id": "US-004",
-      "title": "Write complete session log entry",
-      "description": "As a developer reviewing past sessions, I want a single log entry appended to logs/typeless.log at the end of every completed session so I can inspect what happened.",
+      "title": "Replace tray icon with Unicode character",
+      "description": "As a user, I want the menu bar icon to be crisp and professional so it does not look jagged at any display density.",
       "acceptanceCriteria": [
-        "After API_SUCCESS, one entry is appended to logs/typeless.log in this format: '[YYYY-MM-DD HH:mm:ss] <mode>\\n  audio:  <path>\\n  stt:    \"<sttRaw>\"  (<sttMs>ms)\\n  llm:    \"<llmOut>\"  (<llmMs>ms)\\n  pasted: \"<text>\"  total: <total>ms\\n---\\n'",
-        "Timestamp is local time; timing values are integers (no decimal); total = sttMs + llmMs",
-        "If the log write fails, console.error is called and the paste step is not interrupted",
-        "Sessions that fail (API error, empty transcription) produce no log entry",
+        "tray.setTitle() is called with a suitable non-emoji Unicode character (e.g. ⊙ U+2299 or ◉ U+25C9)",
+        "The PNG icon is replaced with a minimal 1×1 transparent template image, or a proper nativeImage template",
+        "The tooltip ok-typeless is preserved",
         "Typecheck passes"
       ],
       "priority": 4,
       "passes": true,
-      "notes": ""
+      "notes": "On macOS, tray.setTitle(char) renders text natively in the menu bar with no aliasing. A 1×1 transparent template PNG can be used as the icon image since Electron requires a non-null image for new Tray()."
+    },
+    {
+      "id": "US-005",
+      "title": "Add Skip Post-Processing toggle in tray menu and API",
+      "description": "As a user, I want a tray menu option to skip LLM post-processing so I get faster raw output when I do not need cleanup.",
+      "acceptanceCriteria": [
+        "Tray context menu includes a checkbox menu item labeled Skip Post-Processing",
+        "Clicking the item toggles the setting via saveSettings() from settings-store.ts and rebuilds the menu with updated checkmark",
+        "transcribe() in api.ts accepts a skipPostProcessing boolean parameter",
+        "When skipPostProcessing is true and mode is transcribe: LLM call is skipped and sttRaw is returned as llmOut",
+        "When skipPostProcessing is true and mode is translate: LLM is called with a simplified translate-only prompt (no cleanup, just translate to English)",
+        "ipc-handlers.ts reads the current setting via getSettings() and passes it to transcribe()",
+        "When skipPostProcessing is false: existing behavior is unchanged",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Depends on US-001 (settings-store.ts). The simplified translate-only prompt should be: Translate the following to natural English. Return only the translation, nothing else."
+    },
+    {
+      "id": "US-006",
+      "title": "Show capsule indicator when Skip Post-Processing is active",
+      "description": "As a user, I want to see in the capsule when Skip Post-Processing is active so I am never surprised by unformatted output.",
+      "acceptanceCriteria": [
+        "When skipPostProcessing is true, the capsule shows a raw label during recording and processing states",
+        "The label uses the existing .capsule-label style",
+        "The label does not appear when skipPostProcessing is false",
+        "skipPostProcessing is communicated to the renderer: either added to the non-idle AppState variants in types.ts, or sent as a dedicated SETTINGS_UPDATE IPC channel on startup and on each toggle",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Depends on US-005. Choose the simplest IPC approach — adding skipPostProcessing to AppState avoids a new channel but requires updating all state emissions in ipc-handlers.ts."
     }
   ]
 }

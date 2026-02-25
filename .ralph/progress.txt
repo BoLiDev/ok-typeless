@@ -1,20 +1,28 @@
 # Ralph Progress Log
-Started: Wed 25 Feb 2026 17:30:42 +08
+Started: Wed 25 Feb 2026 18:02:02 +08
 ---
 
-## Iteration 1 — All 4 stories (US-001 through US-004)
+## Iteration 1 — US-001 through US-006 (UI Enhancements)
 
-Stories completed: US-001, US-002, US-003, US-004
+### Completed
+All 6 user stories implemented, typecheck clean, all tests pass.
 
-Files changed:
-- src/main/session-logger.ts (new) — SessionLogger module with saveRecording() and writeLogEntry()
-- src/main/api.ts — transcribe() now returns TranscribeResult { sttRaw, sttMs, llmOut, llmMs }
-- src/main/api.test.ts — tests updated for new TranscribeResult shape; mock-mode test added
-- src/main/ipc-handlers.ts — calls saveRecording() before transcribe(), writeLogEntry() after API_SUCCESS
-- .gitignore — added logs/ and logs/recordings/
+### Files Changed
+- `src/shared/types.ts` — added `Settings` type, `SETTINGS_UPDATE` IPC channel, `onSettingsUpdate` to `TypelessApi`
+- `src/main/settings-store.ts` — new file; `getSettings()` and `saveSettings()` using fs + userData path
+- `src/renderer/styles/capsule.css` — added `border: 1px solid rgba(255,255,255,0.18)` to `.capsule`
+- `src/renderer/components/Waveform.tsx` — removed VU-driven heights; 8-bar keyframe animation with per-bar duration/delay; `dimmed` prop disables animation for connecting state
+- `src/renderer/components/Capsule.tsx` — removed `vu` prop; added `skipPostProcessing` prop; shows "raw" label in recording/processing states
+- `src/renderer/components/Capsule.stories.tsx` — updated to new Capsule props (removed `vu`, added `skipPostProcessing`)
+- `src/renderer/App.tsx` — removed `vu` usage; added `onSettingsUpdate` listener; passes `skipPostProcessing` to Capsule
+- `src/main/api.ts` — refactored `llmProcess` to accept prompt string directly; added `skipPostProcessing` param to `transcribe()`; added `TRANSLATE_ONLY_PROMPT`
+- `src/main/ipc-handlers.ts` — reads `getSettings()` before transcribe call; broadcasts initial settings on `did-finish-load`
+- `src/preload/preload.ts` — added `onSettingsUpdate` IPC bridge
+- `src/main/main.ts` — tray now uses `nativeImage.createEmpty()` + `tray.setTitle("⊙")`; added checkbox menu item for Skip Post-Processing; `buildTrayMenu` accepts `capsule` to send `SETTINGS_UPDATE` on toggle
 
-Gotchas / learnings:
-- All implementation was already staged when iteration began; typecheck and tests passed immediately
-- ensureDirectories() is called on every write (idempotent via recursive: true) — no init step needed
-- saveRecording() returns empty string on failure; writeLogEntry() skips but console.errors on failure
-- Mock mode (TYPELESS_MOCK_TRANSCRIPTION) already handled in api.ts: sttRaw === llmOut, all timings 0
+### Gotchas / Learnings
+- `transcribe()` signature: moved `fileName` before `skipPostProcessing` to keep existing test calls compatible (tests pass `"test-audio.wav"` as 3rd positional arg)
+- `Capsule.stories.tsx` was included in tsconfig and had to be updated when Capsule Props changed
+- `nativeImage.createEmpty()` works for the Tray image on macOS when `setTitle()` is used for the visible text
+- Settings persistence uses `app.getPath("userData")` which requires `app` to be imported from electron (main-process only — correct location)
+- The `SETTINGS_UPDATE` channel approach (vs embedding in AppState) keeps settings concerns separate from state machine concerns
