@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
+
 import type { AppState } from "@shared/types";
+
 import { Capsule } from "./components/Capsule";
 import { useAudioRecorder } from "./hooks/useAudioRecorder";
+
+import "./App.css";
 
 export function App(): React.ReactElement | null {
   const [state, setState] = useState<AppState>({ status: "idle" });
@@ -14,14 +18,7 @@ export function App(): React.ReactElement | null {
   if (state.status === "idle") return null;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-      }}
-    >
+    <div className="app">
       <Capsule state={state} vu={vu} />
     </div>
   );
