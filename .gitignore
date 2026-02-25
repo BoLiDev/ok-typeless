@@ -8,3 +8,6 @@ logs/recordings/
 
 *storybook.log
 storybook-static
+
+test/e2e-ai/fixtures/*.wav
+test/e2e-ai/fixtures/*.webm
