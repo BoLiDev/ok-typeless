@@ -1,7 +1,5 @@
 import type { AppState, RecordingMode } from "@shared/types";
 
-// ─── Events ───────────────────────────────────────────────────────────────────
-
 export type StateMachineEvent =
   | { type: "HOTKEY_TRANSCRIBE" }
   | { type: "HOTKEY_TRANSLATE" }
@@ -13,8 +11,6 @@ export type StateMachineEvent =
   | { type: "API_SUCCESS"; text: string }
   | { type: "API_FAILURE"; message: string }
   | { type: "ERROR_TIMEOUT" };
-
-// ─── Transitions ──────────────────────────────────────────────────────────────
 
 function transition(
   state: AppState,
@@ -77,8 +73,6 @@ function transition(
       return null;
   }
 }
-
-// ─── State Machine ────────────────────────────────────────────────────────────
 
 type StateChangeListener = (state: AppState) => void;
 

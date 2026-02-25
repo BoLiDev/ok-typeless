@@ -1,5 +1,3 @@
-// ─── App State ───────────────────────────────────────────────────────────────
-
 export type RecordingMode = "transcribe" | "translate";
 
 export type AppState =
@@ -8,8 +6,6 @@ export type AppState =
   | { status: "recording"; mode: RecordingMode }
   | { status: "processing"; mode: RecordingMode }
   | { status: "error"; message: string };
-
-// ─── IPC Channels ────────────────────────────────────────────────────────────
 
 export const IPC_CHANNELS = {
   /** Main → Renderer: push full AppState on every transition */
@@ -24,8 +20,6 @@ export const IPC_CHANNELS = {
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
 
-// ─── Provider Config ──────────────────────────────────────────────────────────
-
 export type ProviderName = "groq" | "openai";
 
 export type ProviderConfig = {
@@ -34,8 +28,6 @@ export type ProviderConfig = {
   sttModel: string;
   llmModel: string;
 };
-
-// ─── Window API (exposed via contextBridge) ───────────────────────────────────
 
 export type TypelessApi = {
   onStateUpdate: (callback: (state: AppState) => void) => void;
