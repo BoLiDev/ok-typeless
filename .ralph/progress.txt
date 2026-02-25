@@ -1,3 +1,20 @@
 # Ralph Progress Log
 Started: Wed 25 Feb 2026 17:30:42 +08
 ---
+
+## Iteration 1 — All 4 stories (US-001 through US-004)
+
+Stories completed: US-001, US-002, US-003, US-004
+
+Files changed:
+- src/main/session-logger.ts (new) — SessionLogger module with saveRecording() and writeLogEntry()
+- src/main/api.ts — transcribe() now returns TranscribeResult { sttRaw, sttMs, llmOut, llmMs }
+- src/main/api.test.ts — tests updated for new TranscribeResult shape; mock-mode test added
+- src/main/ipc-handlers.ts — calls saveRecording() before transcribe(), writeLogEntry() after API_SUCCESS
+- .gitignore — added logs/ and logs/recordings/
+
+Gotchas / learnings:
+- All implementation was already staged when iteration began; typecheck and tests passed immediately
+- ensureDirectories() is called on every write (idempotent via recursive: true) — no init step needed
+- saveRecording() returns empty string on failure; writeLogEntry() skips but console.errors on failure
+- Mock mode (TYPELESS_MOCK_TRANSCRIPTION) already handled in api.ts: sttRaw === llmOut, all timings 0
