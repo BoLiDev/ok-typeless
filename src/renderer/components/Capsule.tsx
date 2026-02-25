@@ -11,14 +11,7 @@ type Props = {
 function CapsuleContent({ state, vu }: Props): React.ReactElement {
   switch (state.status) {
     case "connecting":
-      return (
-        <>
-          <div className="connecting-dot" />
-          <span className="capsule-label">
-            {state.mode === "translate" ? "Translate" : "Connecting…"}
-          </span>
-        </>
-      );
+      return <Waveform vu={0} dimmed showLabel={state.mode === "translate"} />;
 
     case "recording":
       return <Waveform vu={vu} showLabel={state.mode === "translate"} />;
