@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
+    "setup": "npm install && cp .env.example .env && bash scripts/alias/install-tp-command.sh"
   },
   "dependencies": {
     "dotenv": "^17.3.1",
