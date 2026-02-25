@@ -45,7 +45,11 @@ function transition(
 
     case "recording": {
       const mode: RecordingMode = state.mode;
-      if (event.type === "STOP_RECORDING") {
+      if (
+        event.type === "STOP_RECORDING" ||
+        event.type === "HOTKEY_TRANSCRIBE" ||
+        event.type === "HOTKEY_TRANSLATE"
+      ) {
         return { status: "processing", mode };
       }
       if (event.type === "CANCEL") {

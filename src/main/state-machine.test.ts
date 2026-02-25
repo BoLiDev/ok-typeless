@@ -78,6 +78,20 @@ describe("StateMachine", () => {
     expect(sm.getState()).toEqual({ status: "idle" });
   });
 
+  it("T9a: recording + HOTKEY_TRANSCRIBE (second tap) → processing (preserves mode)", () => {
+    sm.send({ type: "HOTKEY_TRANSCRIBE" });
+    sm.send({ type: "MIC_READY" });
+    sm.send({ type: "HOTKEY_TRANSCRIBE" });
+    expect(sm.getState()).toEqual({ status: "processing", mode: "transcribe" });
+  });
+
+  it("T9b: recording + HOTKEY_TRANSLATE (second tap) → processing (preserves mode)", () => {
+    sm.send({ type: "HOTKEY_TRANSLATE" });
+    sm.send({ type: "MIC_READY" });
+    sm.send({ type: "HOTKEY_TRANSLATE" });
+    expect(sm.getState()).toEqual({ status: "processing", mode: "translate" });
+  });
+
   // ── From: processing ───────────────────────────────────────────────────────
 
   it("T10: processing + API_SUCCESS (non-empty) → idle", () => {
