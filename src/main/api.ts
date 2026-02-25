@@ -116,7 +116,6 @@ export async function transcribe(
   }
   const config = resolveProvider();
   const raw = await whisperTranscribe(audio, config, fileName);
-  return raw;
-  // if (raw.trim() === "") return "";
-  // return llmProcess(raw, mode, config);
+  if (raw.trim() === "") return "";
+  return llmProcess(raw, mode, config);
 }
