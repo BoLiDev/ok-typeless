@@ -13,7 +13,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
-    "setup": "npm install && cp .env.example .env && bash scripts/alias/install-tp-command.sh"
+    "setup": "npm install && cp .env.example .env && bash scripts/alias/install-tp-command.sh",
+    "test:ai": "tsx scripts/e2e-ai.ts"
   },
   "dependencies": {
     "dotenv": "^17.3.1",
