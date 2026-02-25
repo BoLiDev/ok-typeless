@@ -5,30 +5,22 @@ import "../styles/capsule.css";
 
 type Props = {
   state: Exclude<AppState, { status: "idle" }>;
-  skipPostProcessing: boolean;
+  vu: number;
 };
 
-function CapsuleContent({ state, skipPostProcessing }: Props): React.ReactElement {
+function CapsuleContent({ state, vu }: Props): React.ReactElement {
   switch (state.status) {
     case "connecting":
-      return <Waveform dimmed showLabel={state.mode === "translate"} />;
+      return <Waveform vu={0} dimmed showLabel={state.mode === "translate"} />;
 
     case "recording":
-      return (
-        <>
-          <Waveform showLabel={state.mode === "translate"} />
-          {skipPostProcessing && <span className="capsule-label">raw</span>}
-        </>
-      );
+      return <Waveform vu={vu} showLabel={state.mode === "translate"} />;
 
     case "processing":
       return (
-        <>
-          <span className="capsule-label">
-            {state.mode === "translate" ? "Translating…" : "Transcribing…"}
-          </span>
-          {skipPostProcessing && <span className="capsule-label">raw</span>}
-        </>
+        <span className="capsule-label">
+          {state.mode === "translate" ? "Translating…" : "Transcribing…"}
+        </span>
       );
 
     case "error":
@@ -36,13 +28,13 @@ function CapsuleContent({ state, skipPostProcessing }: Props): React.ReactElemen
   }
 }
 
-export function Capsule({ state, skipPostProcessing }: Props): React.ReactElement {
+export function Capsule({ state, vu }: Props): React.ReactElement {
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
       {state.status === "error" && <TipBubble message={state.message} />}
       <div className="capsule">
         <div className="capsule-content">
-          <CapsuleContent state={state} skipPostProcessing={skipPostProcessing} />
+          <CapsuleContent state={state} vu={vu} />
         </div>
       </div>
     </div>

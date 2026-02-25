@@ -16,84 +16,70 @@ type Story = StoryObj<typeof Capsule>;
 export const ConnectingTranscribe: Story = {
   args: {
     state: { status: "connecting", mode: "transcribe" },
-    skipPostProcessing: false,
+    vu: 0,
   },
 };
 
 export const ConnectingTranslate: Story = {
   args: {
     state: { status: "connecting", mode: "translate" },
-    skipPostProcessing: false,
+    vu: 0,
   },
 };
 
 export const RecordingTranscribe: Story = {
   args: {
     state: { status: "recording", mode: "transcribe" },
-    skipPostProcessing: false,
+    vu: 0.4,
   },
 };
 
 export const RecordingTranslate: Story = {
   args: {
     state: { status: "recording", mode: "translate" },
-    skipPostProcessing: false,
-  },
-};
-
-export const RecordingSkipPostProcessing: Story = {
-  args: {
-    state: { status: "recording", mode: "transcribe" },
-    skipPostProcessing: true,
+    vu: 0.4,
   },
 };
 
 export const RecordingSilence: Story = {
   args: {
     state: { status: "recording", mode: "transcribe" },
-    skipPostProcessing: false,
+    vu: 0,
   },
 };
 
 export const ProcessingTranscribe: Story = {
   args: {
     state: { status: "processing", mode: "transcribe" },
-    skipPostProcessing: false,
+    vu: 0,
   },
 };
 
 export const ProcessingTranslate: Story = {
   args: {
     state: { status: "processing", mode: "translate" },
-    skipPostProcessing: false,
-  },
-};
-
-export const ProcessingSkipPostProcessing: Story = {
-  args: {
-    state: { status: "processing", mode: "transcribe" },
-    skipPostProcessing: true,
+    vu: 0,
   },
 };
 
 export const ErrorState: Story = {
   args: {
     state: { status: "error", message: "Microphone permission denied" },
-    skipPostProcessing: false,
+    vu: 0,
   },
 };
 
 export const ErrorNothingHeard: Story = {
   args: {
     state: { status: "error", message: "Nothing heard" },
-    skipPostProcessing: false,
+    vu: 0,
   },
 };
 
 export const ErrorNetworkFailure: Story = {
   args: {
     state: { status: "error", message: "Network error" },
-    skipPostProcessing: false,
+    vu: 0,
   },
 };
 
@@ -122,7 +108,7 @@ function FullFlowPlayer() {
     return () => clearTimeout(timer);
   }, [step, entry.ms]);
 
-  return <Capsule state={entry.state} skipPostProcessing={false} />;
+  return <Capsule state={entry.state} vu={0} />;
 }
 
 export const FullFlow: Story = {
