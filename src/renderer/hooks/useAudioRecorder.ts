@@ -5,7 +5,10 @@ import { MicSession } from "../lib/mic-session";
 const MIC_TIMEOUT_MS = 5000;
 const VAD_SAMPLE_RATE = 16000;
 const VAD_FRAME_SIZE = 256; // ~16 ms at 16 kHz
-const LAUNCH_CUE_URL = new URL("../../../audio/launch.mp3", import.meta.url).toString();
+const LAUNCH_CUE_URL = new URL(
+  "../../../audio/launch.mp3",
+  import.meta.url,
+).toString();
 
 function playLaunchCue(): void {
   try {

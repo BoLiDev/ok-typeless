@@ -14,7 +14,7 @@ function makeAudioCtx() {
 }
 
 describe("MicSession", () => {
-  it("stops all stream tracks when stop() is called", () => {
+  it("stops all stream tracks when stop() is called", async () => {
     const t1 = makeTrack();
     const t2 = makeTrack();
     const session = new MicSession(
@@ -24,6 +24,7 @@ describe("MicSession", () => {
     );
 
     session.stop();
+    await Promise.resolve();
 
     expect(t1.stop).toHaveBeenCalledTimes(1);
     expect(t2.stop).toHaveBeenCalledTimes(1);
@@ -68,25 +69,26 @@ describe("MicSession", () => {
     expect(recorder.stop).not.toHaveBeenCalled();
   });
 
-  it("stops tracks before (or concurrently with) recorder.stop() — not deferred", () => {
+  it("stops stream tracks immediately even if AudioContext close is pending", () => {
     const callOrder: string[] = [];
-    const recorder = {
-      state: "recording" as const,
-      stop: vi.fn(() => callOrder.push("recorder.stop")),
+    const closePromise = new Promise<void>(() => undefined);
+    const ctx = {
+      close: vi.fn(() => {
+        callOrder.push("ctx.close");
+        return closePromise;
+      }),
     };
     const track = { stop: vi.fn(() => callOrder.push("track.stop")) };
     const session = new MicSession(
-      recorder,
+      makeRecorder("inactive"),
       { getTracks: () => [track] },
-      makeAudioCtx(),
+      ctx,
     );
 
     session.stop();
 
-    // track.stop() must be called in the same synchronous turn as recorder.stop(),
-    // not deferred to an async callback (e.g. recorder.onstop).
-    expect(callOrder).toContain("track.stop");
-    expect(callOrder).toContain("recorder.stop");
+    expect(track.stop).toHaveBeenCalledTimes(1);
+    expect(callOrder).toEqual(["track.stop", "ctx.close"]);
   });
 
   it("disconnects all audio nodes when stop() is called", () => {
@@ -105,7 +107,7 @@ describe("MicSession", () => {
     expect(node2.disconnect).toHaveBeenCalledTimes(1);
   });
 
-  it("disconnects audio nodes before stopping stream tracks", () => {
+  it("disconnects audio nodes before stopping stream tracks", async () => {
     const callOrder: string[] = [];
     const node = { disconnect: vi.fn(() => callOrder.push("node.disconnect")) };
     const track = { stop: vi.fn(() => callOrder.push("track.stop")) };
@@ -117,13 +119,14 @@ describe("MicSession", () => {
     );
 
     session.stop();
+    await Promise.resolve();
 
     expect(callOrder.indexOf("node.disconnect")).toBeLessThan(
       callOrder.indexOf("track.stop"),
     );
   });
 
-  it("is idempotent — cleanup runs exactly once even if stop() is called twice", () => {
+  it("is idempotent — cleanup runs exactly once even if stop() is called twice", async () => {
     const track = makeTrack();
     const session = new MicSession(
       makeRecorder(),
@@ -133,6 +136,7 @@ describe("MicSession", () => {
 
     session.stop();
     session.stop();
+    await Promise.resolve();
 
     expect(track.stop).toHaveBeenCalledTimes(1);
   });

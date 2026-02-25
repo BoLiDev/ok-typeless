@@ -26,6 +26,7 @@ export class MicSession {
 
     this.nodes.forEach((n) => n.disconnect());
     this.stream.getTracks().forEach((t) => t.stop());
-    void this.audioCtx.close();
+    // AudioContext cleanup should never block releasing the microphone device.
+    void this.audioCtx.close().catch(() => undefined);
   }
 }

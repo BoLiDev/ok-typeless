@@ -1,0 +1,47 @@
+# tp Launcher
+
+This folder contains scripts to install and run the `tp` command for this project.
+
+## What `tp` Does
+
+`tp` runs `npm run start` in the project root, so you can start the app from any directory.
+
+## Files
+
+- `tp-start.sh`: Runs `npm run start` in this project.
+- `install-tp-command.sh`: Adds the `tp` command to your `~/.zshrc` (idempotent).
+
+## Install
+
+From project root:
+
+```bash
+bash scripts/alias/install-tp-command.sh
+source ~/.zshrc
+```
+
+Or just open a new terminal after running the install script.
+
+## Usage
+
+From anywhere in terminal:
+
+```bash
+tp
+```
+
+## Reinstall / Update
+
+If script path changes, run install again:
+
+```bash
+bash scripts/launcher/install-tp-command.sh
+source ~/.zshrc
+```
+
+## Remove
+
+Open `~/.zshrc` and delete the block between:
+
+- `# >>> ok-typeless tp command >>>`
+- `# <<< ok-typeless tp command <<<`
