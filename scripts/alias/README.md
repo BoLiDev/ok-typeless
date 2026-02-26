@@ -4,7 +4,10 @@ This folder contains scripts to install and run the `tp` command for this projec
 
 ## What `tp` Does
 
-`tp` runs `npm run start` in the project root, so you can start the app from any directory.
+`tp` launches the app in the background and shows a welcome screen in the terminal.
+The app continues running even if you close the terminal window.
+
+For full dev output (logs, errors, HMR), run `npm run start` directly.
 
 ## Files
 
