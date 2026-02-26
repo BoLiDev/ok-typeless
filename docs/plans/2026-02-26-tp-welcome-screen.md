@@ -15,15 +15,19 @@
 The current `vitest.config.mts` only picks up `src/**/*.test.ts`. The formatting logic lives in `scripts/`, so we need to extend the include pattern.
 
 **Files:**
+
 - Modify: `vitest.config.mts`
 
 **Step 1: Update the include pattern**
 
 Change `vitest.config.mts` from:
+
 ```typescript
 include: ["src/**/*.test.ts"],
 ```
+
 to:
+
 ```typescript
 include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
 ```
@@ -33,6 +37,7 @@ include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
 ```bash
 npm test
 ```
+
 Expected: all existing tests pass (no new tests yet).
 
 **Step 3: Commit**
@@ -49,6 +54,7 @@ git commit -m "test: extend vitest to include scripts tests"
 This module has zero side effects — it only takes a version string and returns a formatted string. The arrow-alignment behavior is the main thing worth testing.
 
 **Files:**
+
 - Create: `scripts/welcome-screen.ts`
 - Create: `scripts/welcome-screen.test.ts`
 
@@ -92,6 +98,7 @@ describe("buildWelcomeScreen", () => {
 ```bash
 npm test
 ```
+
 Expected: FAIL — `Cannot find module './welcome-screen'`
 
 **Step 3: Implement the formatting module**
@@ -120,15 +127,16 @@ const LOGO = [
 type Shortcut = { key: string; description: string };
 
 const SHORTCUTS: Shortcut[] = [
-  { key: "Hold Right ⌘", description: "speak in Chinese" },
-  { key: "Hold Right ⌘ + Shift", description: "speak in English" },
+  { key: "Hold Right ⌘", description: "speak" },
+  { key: "Hold Right ⌘ + Shift", description: "speak → English" },
   { key: "Esc", description: "cancel" },
 ];
 
 const LOGO_ANNOTATIONS: ReadonlyArray<(version: string) => string> = [
   () => "",
   () => `   ${ANSI.cyan}TYPELESS${ANSI.reset}`,
-  (v) => `   ${ANSI.dim}macOS voice input  ·  ${ANSI.reset}${ANSI.cyan}v${v}${ANSI.reset}`,
+  (v) =>
+    `   ${ANSI.dim}macOS voice input  ·  ${ANSI.reset}${ANSI.cyan}v${v}${ANSI.reset}`,
   () => "",
   () => "",
   () => "",
@@ -138,7 +146,7 @@ function buildShortcutLines(): string[] {
   const maxKeyWidth = Math.max(...SHORTCUTS.map((s) => s.key.length));
   return SHORTCUTS.map(
     (s) =>
-      `  ${ANSI.white}${s.key.padEnd(maxKeyWidth)}${ANSI.reset}   ${ANSI.dim}→  ${s.description}${ANSI.reset}`
+      `  ${ANSI.white}${s.key.padEnd(maxKeyWidth)}${ANSI.reset}   ${ANSI.dim}→  ${s.description}${ANSI.reset}`,
   );
 }
 
@@ -159,7 +167,9 @@ export function buildWelcomeScreen(version: string): string {
 
   lines.push("");
   lines.push("");
-  lines.push(`  ${ANSI.green}✓${ANSI.reset}  ${ANSI.dim}Running. Close this window anytime.${ANSI.reset}`);
+  lines.push(
+    `  ${ANSI.green}✓${ANSI.reset}  ${ANSI.dim}Running. Close this window anytime.${ANSI.reset}`,
+  );
   lines.push("");
 
   return lines.join("\n");
@@ -171,6 +181,7 @@ export function buildWelcomeScreen(version: string): string {
 ```bash
 npm test
 ```
+
 Expected: 3 new tests pass, all existing tests still pass.
 
 **Step 5: Commit**
@@ -187,6 +198,7 @@ git commit -m "feat: add welcome screen formatting module with tests"
 This file handles all side effects: reads `package.json`, writes to stdout, spawns the detached process, and keeps the process alive. None of this is unit-testable — the formatting it delegates to `welcome-screen.ts`.
 
 **Files:**
+
 - Create: `scripts/tp-welcome.ts`
 
 **Step 1: Create the script**
@@ -201,7 +213,7 @@ import { buildWelcomeScreen } from "./welcome-screen";
 
 function readVersion(): string {
   const pkg = JSON.parse(
-    readFileSync(join(process.cwd(), "package.json"), "utf-8")
+    readFileSync(join(process.cwd(), "package.json"), "utf-8"),
   ) as { version: string };
   return pkg.version;
 }
@@ -230,6 +242,7 @@ process.on("SIGTERM", () => process.exit(0));
 ```bash
 npm run typecheck
 ```
+
 Expected: no errors.
 
 **Step 3: Smoke-test manually**
@@ -238,6 +251,7 @@ Expected: no errors.
 cd /path/to/project
 node_modules/.bin/tsx scripts/tp-welcome.ts
 ```
+
 Expected: welcome screen appears, Electron app launches, terminal stays at the welcome screen. Press Ctrl+C — terminal exits, app keeps running.
 
 **Step 4: Commit**
@@ -252,6 +266,7 @@ git commit -m "feat: add tp-welcome entry point script"
 ### Task 4: Update tp-start.sh to call the new script
 
 **Files:**
+
 - Modify: `scripts/alias/tp-start.sh`
 
 **Step 1: Update the script**
@@ -276,6 +291,7 @@ Using `node_modules/.bin/tsx` directly avoids relying on `tsx` being in the syst
 ```bash
 tp
 ```
+
 Expected: screen clears, welcome screen appears, app launches in the background.
 
 **Step 3: Commit**
@@ -290,6 +306,7 @@ git commit -m "feat: tp command shows welcome screen instead of raw dev output"
 ### Task 5: Update README
 
 **Files:**
+
 - Modify: `scripts/alias/README.md`
 
 **Step 1: Update the README**

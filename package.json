@@ -4,17 +4,17 @@
   "description": "macOS voice input tool — Right Cmd to speak, text appears at cursor",
   "main": "out/main/main.js",
   "scripts": {
+    "setup": "npm install && cp .env.example .env && bash scripts/alias/install-tp-command.sh",
     "start": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "test": "vitest run --config vitest.config.mts --passWithNoTests",
-    "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "test:ai": "tsx scripts/e2e-ai.ts",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
-    "setup": "npm install && cp .env.example .env && bash scripts/alias/install-tp-command.sh",
-    "test:ai": "tsx scripts/e2e-ai.ts"
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "dotenv": "^17.3.1",

@@ -35,15 +35,15 @@ Minimal, no border. Arrows vertically aligned.
 
 ### Color scheme
 
-| Element | Color |
-|---------|-------|
-| Pixel logo | bold white |
-| `TYPELESS` / `v1.0.0` | cyan |
-| `macOS voice input  ·` | dim/gray |
-| Shortcut keys (`Hold Right ⌘`, `Esc`) | white |
-| `→` + description | dim/gray |
-| `✓` | green |
-| Status text | dim/gray |
+| Element                               | Color      |
+| ------------------------------------- | ---------- |
+| Pixel logo                            | bold white |
+| `TYPELESS` / `v1.0.0`                 | cyan       |
+| `macOS voice input  ·`                | dim/gray   |
+| Shortcut keys (`Hold Right ⌘`, `Esc`) | white      |
+| `→` + description                     | dim/gray   |
+| `✓`                                   | green      |
+| Status text                           | dim/gray   |
 
 ### Dynamic content
 
@@ -52,9 +52,9 @@ Minimal, no border. Arrows vertically aligned.
 
 ## File Changes
 
-| File | Action |
-|------|--------|
-| `scripts/tp-welcome.ts` | New — prints welcome screen, spawns detached process |
+| File                        | Action                                                                 |
+| --------------------------- | ---------------------------------------------------------------------- |
+| `scripts/tp-welcome.ts`     | New — prints welcome screen, spawns detached process                   |
 | `scripts/alias/tp-start.sh` | Modified — call `tsx scripts/tp-welcome.ts` instead of `npm run start` |
 
 ## Implementation Notes
