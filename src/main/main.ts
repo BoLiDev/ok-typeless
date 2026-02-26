@@ -73,7 +73,6 @@ function createCapsuleWindow(): BrowserWindow {
     y: screenHeight - winHeight - 16,
     frame: false,
     transparent: true,
-    alwaysOnTop: true,
     focusable: false,
     skipTaskbar: true,
     resizable: false,
@@ -87,7 +86,8 @@ function createCapsuleWindow(): BrowserWindow {
     },
   });
 
-  capsule.setVisibleOnAllWorkspaces(true);
+  capsule.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  capsule.setAlwaysOnTop(true, "screen-saver");
   capsule.setIgnoreMouseEvents(true);
 
   if (process.env["ELECTRON_RENDERER_URL"]) {
