@@ -11,7 +11,7 @@ For full dev output (logs, errors, HMR), run `npm run start` directly.
 
 ## Files
 
-- `tp-start.sh`: Runs `npm run start` in this project.
+- `tp-start.sh`: Shows the welcome screen and launches the app in the background.
 - `install-tp-command.sh`: Adds the `tp` command to your `~/.zshrc` (idempotent).
 
 ## Install

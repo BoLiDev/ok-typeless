@@ -1,5 +1,7 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { describe, it, expect } from "vitest";
-import { buildWelcomeScreen } from "./welcome-screen";
+import { buildWelcomeScreen, readVersion } from "./welcome-screen";
 
 function stripAnsi(str: string): string {
   return str.replace(/\x1b\[[0-9;]*m/g, "");
@@ -24,5 +26,14 @@ describe("buildWelcomeScreen", () => {
       .map((line) => line.indexOf("→"));
     expect(arrowColumns.length).toBe(3);
     expect(new Set(arrowColumns).size).toBe(1);
+  });
+});
+
+describe("readVersion", () => {
+  it("returns the version from package.json", () => {
+    const pkg = JSON.parse(
+      readFileSync(join(process.cwd(), "package.json"), "utf-8"),
+    ) as { version: string };
+    expect(readVersion()).toBe(pkg.version);
   });
 });

@@ -1,3 +1,6 @@
+import { readFileSync } from "fs";
+import { join } from "path";
+
 const ANSI = {
   reset: "\x1b[0m",
   bold: "\x1b[1m",
@@ -40,6 +43,21 @@ function buildShortcutLines(): string[] {
     (s) =>
       `  ${ANSI.white}${s.key.padEnd(maxKeyWidth)}${ANSI.reset}   ${ANSI.dim}→  ${s.description}${ANSI.reset}`,
   );
+}
+
+export function readVersion(): string {
+  const raw: unknown = JSON.parse(
+    readFileSync(join(process.cwd(), "package.json"), "utf-8"),
+  );
+  if (
+    raw !== null &&
+    typeof raw === "object" &&
+    "version" in raw &&
+    typeof (raw as Record<string, unknown>)["version"] === "string"
+  ) {
+    return (raw as Record<string, unknown>)["version"] as string;
+  }
+  throw new Error("package.json is missing a valid version string");
 }
 
 export function buildWelcomeScreen(version: string): string {

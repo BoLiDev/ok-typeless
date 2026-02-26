@@ -1,14 +1,5 @@
 import { spawn } from "child_process";
-import { readFileSync } from "fs";
-import { join } from "path";
-import { buildWelcomeScreen } from "./welcome-screen";
-
-function readVersion(): string {
-  const pkg = JSON.parse(
-    readFileSync(join(process.cwd(), "package.json"), "utf-8"),
-  ) as { version: string };
-  return pkg.version;
-}
+import { buildWelcomeScreen, readVersion } from "./welcome-screen";
 
 function launchApp(): void {
   const child = spawn("npm", ["run", "start"], {
