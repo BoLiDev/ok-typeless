@@ -5,6 +5,14 @@ import { transcribe } from "./llm/api";
 import { pasteText } from "./clipboard-output";
 import { saveRecording, writeLogEntry } from "./session-logger";
 import { getSettings } from "./settings-store";
+import { spawn } from "child_process";
+import { join } from "path";
+
+export function playLaunchCue(): void {
+  const audioPath = join(__dirname, "../../audio/launch.mp3");
+  const proc = spawn("afplay", [audioPath]);
+  proc.on("error", (err) => console.error("[launch-cue]", err));
+}
 
 export function registerIpcHandlers(capsule: BrowserWindow): void {
   broadcastStateOnTransition(capsule);
@@ -44,6 +52,7 @@ function broadcastInitialSettings(capsule: BrowserWindow): void {
 
 function handleMicReady(): void {
   ipcMain.on(IPC_CHANNELS.MIC_READY, () => {
+    playLaunchCue();
     stateMachine.send({ type: "MIC_READY" });
   });
 }
