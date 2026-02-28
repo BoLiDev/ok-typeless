@@ -52,6 +52,7 @@ function broadcastInitialSettings(capsule: BrowserWindow): void {
 
 function handleMicReady(): void {
   ipcMain.on(IPC_CHANNELS.MIC_READY, () => {
+    if (stateMachine.getState().status !== "connecting") return;
     playLaunchCue();
     stateMachine.send({ type: "MIC_READY" });
   });
