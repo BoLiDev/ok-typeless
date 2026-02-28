@@ -1,6 +1,10 @@
 ---
-description: Fetch URL content and extract relevant information with zero loss
+name: url-reader
+description: Fetch URL content and extract relevant information with zero loss. It will find you all the information from the source behind the URL based on what you're looking for!
 model: sonnet
+tools: WebFetch, WebSearch
+mcpServers:
+  - lark
 ---
 
 # URL Explorer

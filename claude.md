@@ -16,19 +16,9 @@ macOS desktop voice input tool. Hold the Right Cmd key and speak — your words 
 
 Main-heavy: Core logic is handled in the main process; the renderer is responsible only for the capsule UI and audio recording.
 
-## Key Documents
-
-- PRD: `docs/2026-02-23-prd.md`
-- Tech Design: `docs/2026-02-24-tech-design.md`
-
 ## Current Status
 
-All 13 MVP tasks complete. The app is fully functional on `master`.
-
-Ralph autonomous loop is set up in `.ralph/`. To run new feature work:
-
-1. Populate `.ralph/prd.json` with user stories (use the ralph-skills PRD workflow).
-2. Run: `bash .ralph/ralph.sh --tool claude --max-iterations 20`
+All MVP tasks complete. The app is fully functional on `master`.
 
 ## Conventions
 

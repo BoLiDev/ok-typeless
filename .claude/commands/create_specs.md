@@ -51,7 +51,7 @@ Then wait for the user's input.
 
    Before asking the user any questions, use specialized agents to research in parallel:
 
-   - Use the **url-reader** agent to fetch and summarize mentioned URLs (1 agent per URL, max ~10 concurrent)
+   - For each URL the user provides, spawn a Task with `subagent_type="url-reader"` (1 task per URL, max ~10 concurrent). Do NOT use `general-purpose` for URL fetching.
    - If an existing codebase is referenced, use the **codebase-analyzer** agent to understand current state (scope by relevant directories, not the whole repo)
    - If existing `specs/*` files exist, read them ALL to understand what's already defined
 
@@ -285,7 +285,7 @@ When spawning research sub-tasks:
    - What information to extract and summarize
    - Expected output format
 4. **Use the right agent for each type of research**:
-   - **url-explorer** — Fetch and summarize external URLs, docs, APIs (1 per URL)
+   - **url-reader** (`subagent_type="url-reader"`) — Fetch and summarize external URLs, docs, APIs (1 per URL)
    - **codebase-analyzer** — Understand existing implementation (scope to relevant directories)
    - **codebase-locator** — Find specific files related to a topic
 5. **Wait for all tasks to complete** before synthesizing
@@ -304,7 +304,7 @@ User: I want to build a mood board tool for designers. Here's a rough PRD: docs/
        Also check out these for inspiration: https://moodboard.io, https://coolors.co
 Assistant: Let me read that PRD and research those URLs first...
 
-[Reads PRD fully, spawns url-explorer agents for both URLs]
+[Reads PRD fully, spawns url-reader agents for both URLs]
 
 Based on the PRD and my research, I understand we're building a mood board creation tool
 for professional designers. The key JTBDs I see are:
